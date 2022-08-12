@@ -127,4 +127,14 @@ router
     controller.updateReceptionistSalary
   );
 
+router.patch(
+  "/users/changePassword",
+  authMW,
+  body("password")
+    .isLength({ min: 8, max: 32 })
+    .withMessage("Password should be between 8 & 32 characters"),
+  validationMW,
+  controller.updateUserPassword
+);
+
 export default router;

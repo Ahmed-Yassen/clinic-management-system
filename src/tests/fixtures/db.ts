@@ -12,7 +12,7 @@ const admin = {
 };
 
 const specialty = { name: "Eyes" };
-
+const receptionistToken = jwt.sign({ id: 2 }, process.env.JWT_SECRET as Secret);
 const receptionist = {
   fullName: "Pam",
   address: "Moharam Beek",
@@ -21,6 +21,7 @@ const receptionist = {
   UserId: 2,
 };
 
+const doctorToken = jwt.sign({ id: 3 }, process.env.JWT_SECRET as Secret);
 const doctor = {
   fullName: "Sheldon Cooper",
   address: "Smouha",
@@ -58,4 +59,12 @@ const populateTestingDB = async () => {
   });
 };
 
-export { populateTestingDB, admin, adminToken, doctor, receptionist };
+export {
+  populateTestingDB,
+  admin,
+  adminToken,
+  doctor,
+  receptionist,
+  doctorToken,
+  receptionistToken,
+};

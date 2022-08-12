@@ -6,6 +6,8 @@ import {
   adminToken,
   doctor,
   receptionist,
+  doctorToken,
+  receptionistToken,
 } from "./fixtures/db";
 import connection from "../db";
 
@@ -85,4 +87,18 @@ test("Should get all users for admin only", async () => {
     .expect(200);
   expect(response.body.doctors[0]).toMatchObject(doctor);
   expect(response.body.receptionists[0]).toMatchObject(receptionist);
+});
+
+test("Should get current user profile", async () => {
+  let response = await request(app)
+    .get("/users")
+    .set("Authorization", `Bearer ${doctorToken}`)
+    .expect(200);
+  expect(response.body.user).toMatchObject(doctor);
+
+  response = await request(app)
+    .get("/users")
+    .set("Authorization", `Bearer ${receptionistToken}`)
+    .expect(200);
+  expect(response.body.user).toMatchObject(receptionist);
 });

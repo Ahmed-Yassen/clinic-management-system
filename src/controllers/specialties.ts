@@ -18,4 +18,13 @@ export default class SpecialtiesController {
       next(error);
     }
   }
+
+  async getAllSpecialties(req: Request, res: Response, next: NextFunction) {
+    try {
+      const specialties = await Specialties.findAll();
+      res.json({ success: true, specialties });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

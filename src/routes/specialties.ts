@@ -21,6 +21,7 @@ router
     ],
     validationMW,
     controller.createSpecialty
-  );
+  )
+  .get(authMW, controller.getAllSpecialties);
 
 export default router;

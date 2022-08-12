@@ -19,4 +19,56 @@ const connection = new Sequelize({
   models: [Users, Appointments, Doctors, Patients, Receptionists, Specialties],
 });
 
+/** One To One */
+Users.hasOne(Receptionists, {
+  foreignKey: {
+    allowNull: false,
+  },
+  onDelete: "CASCADE",
+  hooks: true,
+});
+Receptionists.belongsTo(Users);
+
+Users.hasOne(Doctors, {
+  foreignKey: {
+    allowNull: false,
+  },
+  onDelete: "CASCADE",
+  hooks: true,
+});
+Doctors.belongsTo(Users);
+
+/** One To Many */
+Specialties.hasMany(Doctors, {
+  foreignKey: {
+    allowNull: false,
+  },
+  hooks: true,
+});
+Doctors.belongsTo(Specialties);
+
+Specialties.hasMany(Appointments, {
+  foreignKey: {
+    allowNull: false,
+  },
+  hooks: true,
+});
+Appointments.belongsTo(Specialties);
+
+Patients.hasMany(Appointments, {
+  foreignKey: {
+    allowNull: false,
+  },
+  hooks: true,
+});
+Appointments.belongsTo(Patients);
+
+Doctors.hasMany(Appointments, {
+  foreignKey: {
+    allowNull: false,
+  },
+  hooks: true,
+});
+Appointments.belongsTo(Doctors);
+
 export default connection;

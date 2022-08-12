@@ -42,4 +42,16 @@ export default class PatientsController {
       next(error);
     }
   }
+
+  async deletePatient(req: any, res: Response, next: NextFunction) {
+    try {
+      const patient = await Patients.findByPk(req.params.id);
+      if (!patient)
+        throwCustomError("Couldnt find a patient with that id", 404);
+      await patient?.destroy();
+      res.json({ msg: "Deleted Successfully!", patient });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

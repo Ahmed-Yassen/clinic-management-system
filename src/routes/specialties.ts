@@ -37,6 +37,16 @@ router
     ],
     validationMW,
     controller.updateSpecialty
+  )
+  .delete(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Specialty id should be number!"),
+    ],
+    validationMW,
+    controller.deleteSpecialty
   );
-
 export default router;

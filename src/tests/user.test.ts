@@ -110,3 +110,11 @@ test("Should get specific doctor profile as admin", async () => {
     .expect(200);
   expect(response.body.doctor).toMatchObject(doctor);
 });
+
+test("Should get specific receptionist", async () => {
+  const response = await request(app)
+    .get("/users/receptionists/1")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .expect(200);
+  expect(response.body.receptionist).toMatchObject(receptionist);
+});

@@ -44,3 +44,30 @@ test("Should create receptionist as admin", async () => {
     salary: 2750,
   });
 });
+
+test("Should create doctor as admin", async () => {
+  const response = await request(app)
+    .post("/signup/doctor")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .send({
+      email: "doctorstrange@test.com",
+      password: "somevalidpass",
+      role: "doctor",
+      phoneNumber: "01125986761",
+      address: "Alexandria Egypt",
+      fullName: "Stephan Strange",
+      examinationPrice: 55,
+      SpecialtyId: 1,
+    })
+    .expect(201);
+  expect(response.body.fullData.user).toMatchObject({
+    email: "doctorstrange@test.com",
+    role: "doctor",
+  });
+  expect(response.body.fullData.doctor).toMatchObject({
+    phoneNumber: "01125986761",
+    address: "Alexandria Egypt",
+    fullName: "Stephan Strange",
+    examinationPrice: 55,
+  });
+});

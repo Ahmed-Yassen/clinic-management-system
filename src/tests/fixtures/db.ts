@@ -3,6 +3,7 @@ import jwt, { Secret } from "jsonwebtoken";
 import { Specialties } from "../../models/specialties";
 import { Receptionists } from "../../models/receptionists";
 import { Doctors } from "../../models/doctors";
+import { Patients } from "../../models/patients";
 
 const adminToken = jwt.sign({ id: 1 }, process.env.JWT_SECRET as Secret);
 const admin = {
@@ -31,6 +32,8 @@ const doctor = {
   SpecialtyId: 1,
 };
 
+const patient = { fullName: "Ahmed Yassen", phoneNumber: "01125986761" };
+
 const populateTestingDB = async () => {
   await Users.create({
     ...admin,
@@ -57,6 +60,10 @@ const populateTestingDB = async () => {
   await Doctors.create({
     ...doctor,
   });
+
+  await Patients.create({
+    ...patient,
+  });
 };
 
 export {
@@ -68,4 +75,5 @@ export {
   doctorToken,
   receptionistToken,
   specialty,
+  patient,
 };

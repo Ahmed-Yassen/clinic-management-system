@@ -16,7 +16,7 @@ export default class PatientsController {
   async createPatient(req: any, res: Response, next: NextFunction) {
     try {
       const patient = await Patients.create({ ...req.body });
-      res.status(201).json({ msg: "Patient Created!", patient });
+      res.status(201).json({ success: true, patient });
     } catch (error) {
       next(error);
     }
@@ -36,8 +36,8 @@ export default class PatientsController {
       if (!patient)
         throwCustomError("Couldnt find a patient with that id", 404);
 
-      const updatedPatient = await patient?.update(req.body);
-      res.json({ msg: "Updated Successfully!", updatedPatient });
+      await patient?.update(req.body);
+      res.json({ success: true, patient });
     } catch (error) {
       next(error);
     }
@@ -49,7 +49,7 @@ export default class PatientsController {
       if (!patient)
         throwCustomError("Couldnt find a patient with that id", 404);
       await patient?.destroy();
-      res.json({ msg: "Deleted Successfully!", patient });
+      res.json({ success: true, patient });
     } catch (error) {
       next(error);
     }

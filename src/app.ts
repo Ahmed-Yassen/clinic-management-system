@@ -19,6 +19,7 @@ app.use([
   specialtiesRouter,
   receptionistsRouter,
   patientsRouter,
+  doctorRouter,
 ]);
 
 app.use((req, res, next) => {

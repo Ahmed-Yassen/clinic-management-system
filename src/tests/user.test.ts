@@ -1,6 +1,12 @@
 import { agent as request } from "supertest";
 import app from "../app";
-import { populateTestingDB, admin, adminToken } from "./fixtures/db";
+import {
+  populateTestingDB,
+  admin,
+  adminToken,
+  doctor,
+  receptionist,
+} from "./fixtures/db";
 import connection from "../db";
 
 beforeEach(async () => {
@@ -70,4 +76,13 @@ test("Should create doctor as admin", async () => {
     fullName: "Stephan Strange",
     examinationPrice: 55,
   });
+});
+
+test("Should get all users for admin only", async () => {
+  const response = await request(app)
+    .get("/usersAll")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .expect(200);
+  expect(response.body.doctors[0]).toMatchObject(doctor);
+  expect(response.body.receptionists[0]).toMatchObject(receptionist);
 });

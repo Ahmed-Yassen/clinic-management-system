@@ -78,6 +78,25 @@ router
     ],
     validationMW,
     controller.getSpecificDoctor
+  )
+  .patch(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Doctor id must be a valid number."),
+      body("examinationPrice")
+        .optional()
+        .isFloat({ min: 50 })
+        .withMessage("Incorrect ExaminationPrice value."),
+      body("SpecialtyId")
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage("Incorrect SpecialtyId value."),
+    ],
+    validationMW,
+    controller.updateDoctorAsAdmin
   );
 
 router

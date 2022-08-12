@@ -63,4 +63,6 @@ router.post(
   controller.createDoctor
 );
 
+router.get("/usersAll", authMW, isAdmin, controller.getAllUsers);
+
 export default router;

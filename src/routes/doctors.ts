@@ -26,3 +26,5 @@ router.patch(
   validationMW,
   controller.updateProfile
 );
+
+export default router;

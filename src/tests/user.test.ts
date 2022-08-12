@@ -118,3 +118,12 @@ test("Should get specific receptionist", async () => {
     .expect(200);
   expect(response.body.receptionist).toMatchObject(receptionist);
 });
+
+test("Should update receptionist salary as admin", async () => {
+  const response = await request(app)
+    .patch("/users/receptionists/1")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .send({ salary: 3000 })
+    .expect(200);
+  expect(response.body.receptionist).toMatchObject({ salary: 3000 });
+});

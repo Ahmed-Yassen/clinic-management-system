@@ -160,4 +160,32 @@ export default class UserController {
       next(error);
     }
   }
+
+  async updateDoctorAsAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      const allowedFields = ["examinationPrice", "SpecialtyId"];
+      const requestFields = Object.keys(req.body);
+      const isValidUpdate = requestFields.every((field) =>
+        allowedFields.includes(field)
+      );
+      if (!isValidUpdate)
+        throwCustomError(
+          "Admins can only update doctor's examinationPrice & SpecialtyId",
+          400
+        );
+
+      if (req.body.SpecialtyId) {
+        const specialty = await Specialties.findByPk(req.body.SpecialtyId);
+        if (!specialty)
+          throwCustomError("Couldnt find a specialty with that id", 404);
+      }
+
+      const doctor = await Doctors.findByPk(req.params.id);
+      if (!doctor) throwCustomError("Couldnt find a doctor with that id", 404);
+      await doctor?.update(req.body);
+      res.json({ success: true, doctor });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

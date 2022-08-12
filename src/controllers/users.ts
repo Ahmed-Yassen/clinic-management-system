@@ -188,4 +188,17 @@ export default class UserController {
       next(error);
     }
   }
+
+  async updateUserPassword(req: any, res: Response, next: NextFunction) {
+    try {
+      const requestFields = Object.keys(req.body);
+      if (requestFields.length > 1 || requestFields[0] !== "password")
+        throwCustomError("Only update password", 400);
+
+      await req.user.update({ password: req.body.password });
+      return res.json({ success: true, msg: "Password Updated!" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

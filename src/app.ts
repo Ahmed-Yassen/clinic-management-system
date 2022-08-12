@@ -5,6 +5,7 @@ import loginRouter from "./routes/login";
 import specialtiesRouter from "./routes/specialties";
 import receptionistsRouter from "./routes/receptionists";
 import patientsRouter from "./routes/patients";
+import doctorRouter from "./routes/doctors";
 
 import dotenv from "dotenv";
 dotenv.config({ path: __dirname + "/../config/dev.env" });

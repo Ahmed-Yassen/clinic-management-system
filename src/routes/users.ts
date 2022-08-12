@@ -79,4 +79,19 @@ router
     validationMW,
     controller.getSpecificDoctor
   );
+
+router
+  .route("/users/receptionists/:id")
+  .get(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Receptionist id must be a valid number."),
+    ],
+    validationMW,
+    controller.getSpecificReceptionist
+  );
+
 export default router;

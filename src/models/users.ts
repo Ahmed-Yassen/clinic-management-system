@@ -1,4 +1,13 @@
-import { Table, Model, Column, DataType, IsEmail } from "sequelize-typescript";
+import {
+  Table,
+  Model,
+  Column,
+  DataType,
+  IsEmail,
+  BeforeSave,
+} from "sequelize-typescript";
+
+import bcrypt from "bcrypt";
 
 @Table({
   tableName: "users",
@@ -23,8 +32,13 @@ export class Users extends Model {
     allowNull: false,
   })
   role!: string;
-}
 
+  @BeforeSave
+  static async hashPassword(instance: Users) {
+    if (instance.changed("password"))
+      instance.password = await bcrypt.hash(instance.password, 8);
+  }
+}
 Users.prototype.toJSON = function () {
   const user = this;
   if (user.role === "admin") return {};

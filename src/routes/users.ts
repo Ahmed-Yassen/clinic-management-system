@@ -64,5 +64,6 @@ router.post(
 );
 
 router.get("/usersAll", authMW, isAdmin, controller.getAllUsers);
+router.get("/users", authMW, controller.getMyProfile);
 
 export default router;

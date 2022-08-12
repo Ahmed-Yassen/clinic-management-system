@@ -102,3 +102,11 @@ test("Should get current user profile", async () => {
     .expect(200);
   expect(response.body.user).toMatchObject(receptionist);
 });
+
+test("Should get specific doctor profile as admin", async () => {
+  const response = await request(app)
+    .get("/users/doctors/1")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .expect(200);
+  expect(response.body.doctor).toMatchObject(doctor);
+});

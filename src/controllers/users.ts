@@ -143,4 +143,21 @@ export default class UserController {
       next(error);
     }
   }
+
+  async updateReceptionistSalary(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const receptionist = await Receptionists.findByPk(req.params.id);
+      if (!receptionist)
+        throwCustomError("Couldnt find a receptionist with that id", 404);
+
+      await receptionist?.update({ salary: req.body.salary });
+      res.json({ success: true, receptionist });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

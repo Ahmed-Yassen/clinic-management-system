@@ -92,6 +92,20 @@ router
     ],
     validationMW,
     controller.getSpecificReceptionist
+  )
+  .patch(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Receptionst id must be a valid number."),
+      body("salary")
+        .isFloat({ min: 2700 })
+        .withMessage("Incorrect Salary value."),
+    ],
+    validationMW,
+    controller.updateReceptionistSalary
   );
 
 export default router;

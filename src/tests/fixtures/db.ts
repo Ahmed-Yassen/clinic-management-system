@@ -1,5 +1,7 @@
 import { Users } from "../../models/users";
+import jwt, { Secret } from "jsonwebtoken";
 
+const adminToken = jwt.sign({ id: 1 }, process.env.JWT_SECRET as Secret);
 const admin = {
   email: process.env.ADMIN_EMAIL,
   password: process.env.ADMIN_PASSWORD,
@@ -12,4 +14,4 @@ const populateTestingDB = async () => {
   });
 };
 
-export { populateTestingDB, admin };
+export { populateTestingDB, admin, adminToken };

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import userController from "../controllers/users";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import validationMW from "../middlewares/validationMW";
 import authMW from "../middlewares/authMW";
 import { isAdmin } from "../middlewares/rolesMW";
@@ -66,4 +66,17 @@ router.post(
 router.get("/usersAll", authMW, isAdmin, controller.getAllUsers);
 router.get("/users", authMW, controller.getMyProfile);
 
+router
+  .route("/users/doctors/:id")
+  .get(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Receptionist id must be a valid number."),
+    ],
+    validationMW,
+    controller.getSpecificDoctor
+  );
 export default router;

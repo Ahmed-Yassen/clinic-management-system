@@ -122,4 +122,14 @@ export default class UserController {
       next(error);
     }
   }
+
+  async getSpecificDoctor(req: any, res: Response, next: NextFunction) {
+    try {
+      const doctor = await Doctors.findByPk(req.params.id);
+      if (!doctor) throwCustomError("Couldnt find a doctor with that id", 404);
+      res.json({ success: true, doctor });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

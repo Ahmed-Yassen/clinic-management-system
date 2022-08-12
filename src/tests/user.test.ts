@@ -150,3 +150,10 @@ test("Should change user password", async () => {
     .send({ email: "doctor@test.com", password: newPassword })
     .expect(200);
 });
+
+test("Should delete user as admin", async () => {
+  await request(app)
+    .delete("/users/2")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .expect(200);
+});

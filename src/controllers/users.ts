@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import { Response, NextFunction, Request } from "express";
 import { Receptionists } from "../models/receptionists";
 import { throwCustomError } from "../utils/helperFunctions";
 import { Users } from "../models/users";
@@ -88,4 +88,15 @@ export default class UserController {
       next(error);
     }
   };
+
+  async getAllUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const doctors = await Doctors.findAll();
+      const receptionists = await Receptionists.findAll();
+
+      res.json({ success: true, doctors, receptionists });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

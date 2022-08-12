@@ -99,4 +99,27 @@ export default class UserController {
       next(err);
     }
   }
+
+  async getMyProfile(req: any, res: Response, next: NextFunction) {
+    try {
+      if (req.role === "admin")
+        throwCustomError("Admin doesnt have a profile!", 400);
+      let user = null;
+      switch (req.role) {
+        case "doctor":
+          user = await Doctors.findOne({
+            where: { UserId: req.user.id },
+          });
+          break;
+        case "receptionist":
+          user = await Receptionists.findOne({
+            where: { UserId: req.user.id },
+          });
+          break;
+      }
+      res.json({ success: true, user });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

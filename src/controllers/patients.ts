@@ -12,4 +12,12 @@ export default class PatientsController {
       next(error);
     }
   }
+  async createPatient(req: any, res: Response, next: NextFunction) {
+    try {
+      const patient = await Patients.create({ ...req.body });
+      res.status(201).json({ msg: "Patient Created!", patient });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

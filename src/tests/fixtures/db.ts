@@ -67,4 +67,5 @@ export {
   receptionist,
   doctorToken,
   receptionistToken,
+  specialty,
 };

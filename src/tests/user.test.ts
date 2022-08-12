@@ -127,3 +127,12 @@ test("Should update receptionist salary as admin", async () => {
     .expect(200);
   expect(response.body.receptionist).toMatchObject({ salary: 3000 });
 });
+
+test("Should update doctor as admin", async () => {
+  const response = await request(app)
+    .patch("/users/doctors/1")
+    .set("Authorization", `Bearer ${adminToken}`)
+    .send({ examinationPrice: 80 })
+    .expect(200);
+  expect(response.body.doctor).toMatchObject({ examinationPrice: 80 });
+});

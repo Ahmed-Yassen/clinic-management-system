@@ -136,3 +136,17 @@ test("Should update doctor as admin", async () => {
     .expect(200);
   expect(response.body.doctor).toMatchObject({ examinationPrice: 80 });
 });
+
+test("Should change user password", async () => {
+  const newPassword = "MySuperStrongPassword";
+  await request(app)
+    .patch("/users/changePassword")
+    .set("Authorization", `Bearer ${doctorToken}`)
+    .send({ password: newPassword })
+    .expect(200);
+
+  await request(app)
+    .post("/login")
+    .send({ email: "doctor@test.com", password: newPassword })
+    .expect(200);
+});

@@ -137,4 +137,13 @@ router.patch(
   controller.updateUserPassword
 );
 
+router.delete(
+  "/users/:id",
+  authMW,
+  isAdmin,
+  [param("id").isInt({ min: 1 }).withMessage("Invalid user id value.")],
+  validationMW,
+  controller.deleteUser
+);
+
 export default router;

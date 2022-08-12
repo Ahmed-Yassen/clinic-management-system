@@ -201,4 +201,20 @@ export default class UserController {
       next(error);
     }
   }
+
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const deletedUser: Users | null = await Users.findByPk(req.params.id);
+      if (!deletedUser)
+        throwCustomError("Couldnt find a user with that id", 404);
+
+      await deletedUser?.destroy();
+      return res.json({
+        success: true,
+        user: deletedUser?.toJSON(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

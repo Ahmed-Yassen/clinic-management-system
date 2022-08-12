@@ -27,4 +27,17 @@ export default class SpecialtiesController {
       next(error);
     }
   }
+
+  async updateSpecialty(req: Request, res: Response, next: NextFunction) {
+    try {
+      let specialty = await Specialties.findByPk(req.params.id);
+      if (!specialty)
+        throwCustomError("Couldnt find a specialty with that id!", 404);
+
+      await specialty?.update(req.body);
+      res.json({ success: true, specialty });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

@@ -24,4 +24,19 @@ router
   )
   .get(authMW, controller.getAllSpecialties);
 
+router
+  .route("/specialties/:id")
+  .patch(
+    authMW,
+    isAdmin,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("Specialty id should be number!"),
+      body("name").isString().withMessage("Specialty name should be text!"),
+    ],
+    validationMW,
+    controller.updateSpecialty
+  );
+
 export default router;

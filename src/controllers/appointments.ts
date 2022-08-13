@@ -391,4 +391,17 @@ export default class AppointmentsController {
       next(error);
     }
   };
+
+  async cancelAppointment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const appointment = await Appointments.findByPk(req.params.id);
+      !appointment &&
+        throwCustomError("Couldnt find an appointment with that id", 404);
+
+      await appointment?.destroy();
+      res.json({ msg: "Deleted", appointment });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

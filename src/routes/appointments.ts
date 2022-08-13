@@ -110,6 +110,16 @@ router
         .withMessage("AppointmentId should be a positive int."),
     ],
     controller.editAppointment
+  )
+  .delete(
+    authMW,
+    isReceptionist,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("AppointmentId should be a positive int."),
+    ],
+    controller.cancelAppointment
   );
 
 export default router;

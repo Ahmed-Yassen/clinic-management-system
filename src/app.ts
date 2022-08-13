@@ -6,6 +6,7 @@ import specialtiesRouter from "./routes/specialties";
 import receptionistsRouter from "./routes/receptionists";
 import patientsRouter from "./routes/patients";
 import doctorRouter from "./routes/doctors";
+import appointmentsRouter from "./routes/appointments";
 
 import dotenv from "dotenv";
 dotenv.config({ path: __dirname + "/../config/dev.env" });
@@ -20,6 +21,7 @@ app.use([
   receptionistsRouter,
   patientsRouter,
   doctorRouter,
+  appointmentsRouter,
 ]);
 
 app.use((req, res, next) => {

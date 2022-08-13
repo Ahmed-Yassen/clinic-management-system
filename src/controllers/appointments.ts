@@ -1,3 +1,4 @@
+import { Request, Response, NextFunction } from "express";
 import moment from "moment";
 import { Op } from "sequelize";
 import { Appointments } from "../models/appointments";
@@ -139,5 +140,29 @@ export default class AppointmentsController {
   private validateDate = (date: Date) => {
     this.isOldDate(date) && throwCustomError("This is an old date!", 400);
     isOffDay(date) && throwCustomError("This is an off day!", 400);
+  };
+
+  getAllAppointmentsOnDay = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.params.date));
+      isOffDay(date) && throwCustomError("This is an off day!", 400);
+
+      const startOfDay = toGMT2(moment(date).hours(openingHour).toDate());
+      const endOfDay = toGMT2(moment(date).hours(closingHour).toDate());
+
+      const appointments = await Appointments.findAll({
+        where: {
+          date: { [Op.between]: [startOfDay, endOfDay] },
+        },
+        order: [["date", "ASC"]],
+      });
+      res.json(appointments);
+    } catch (err) {
+      next(err);
+    }
   };
 }

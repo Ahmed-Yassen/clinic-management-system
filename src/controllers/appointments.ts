@@ -12,6 +12,7 @@ import {
   sessionsPerHour,
 } from "../utils/helperVariables";
 import { Patients } from "../models/patients";
+import { Specialties } from "../models/specialties";
 
 export default class AppointmentsController {
   constructor() {}
@@ -200,7 +201,37 @@ export default class AppointmentsController {
         PatientId: patient?.id,
       });
 
-      res.status(201).json(appointment);
+      res.status(201).json({ success: true, appointment });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createAppointmentInSpecialty = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.body.date));
+      this.validateDate(date);
+      const specialty = await Specialties.findByPk(req.params.id);
+      !specialty &&
+        throwCustomError("Couldnt find a specialty with that id", 404);
+
+      const [specialtyNearestAppointment, nearestDoctorId] =
+        await this.findSpecialtyNearestDate(date, specialty?.id);
+
+      !specialtyNearestAppointment &&
+        throwCustomError("This day is full!", 400);
+
+      const appointment = await Appointments.create({
+        date: specialtyNearestAppointment,
+        PatientId: req.body.PatientId,
+        SpecialtyId: specialty?.id,
+        DoctorId: nearestDoctorId,
+      });
+      res.status(201).json({ success: true, appointment });
     } catch (error) {
       next(error);
     }

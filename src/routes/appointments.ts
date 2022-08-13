@@ -31,4 +31,20 @@ router.post(
   controller.createAppointmentWithSpecificDoctor
 );
 
+router.post(
+  "/appointments/specialty/:id",
+  authMW,
+  isReceptionist,
+  [
+    param("id")
+      .isInt({ min: 1 })
+      .withMessage("SpecialtyId should be a positive int."),
+    body("PatientId")
+      .isInt({ min: 1 })
+      .withMessage("PatientId should be a positive int."),
+  ],
+  validationMW,
+  controller.createAppointmentWithSpecificDoctor
+);
+
 export default router;

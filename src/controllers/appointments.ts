@@ -295,4 +295,32 @@ export default class AppointmentsController {
       next(error);
     }
   };
+
+  getDoctorNearestAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.params.date));
+      this.validateDate(date);
+      const doctor = await Doctors.findByPk(req.params.id);
+      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
+
+      const doctorAppointments = (
+        await this.getDoctorAppointmentsOnDay(doctor?.id, date)
+      ).map((appointment) => appointment.getDataValue("date"));
+
+      const nearestAppointment = this.findDoctorNearestDate(
+        date,
+        doctorAppointments
+      );
+      !nearestAppointment &&
+        throwCustomError("This day is full, try another day!", 400);
+
+      res.json({ nearestAppointment: nearestAppointment?.toLocaleString() });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

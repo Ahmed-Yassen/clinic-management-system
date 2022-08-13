@@ -11,6 +11,7 @@ import {
   maxSessionsPerDay,
   sessionsPerHour,
 } from "../utils/helperVariables";
+import { Patients } from "../models/patients";
 
 export default class AppointmentsController {
   constructor() {}
@@ -163,6 +164,45 @@ export default class AppointmentsController {
       res.json(appointments);
     } catch (err) {
       next(err);
+    }
+  };
+
+  createAppointmentWithSpecificDoctor = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.body.date));
+      this.validateDate(date);
+
+      const doctor = await Doctors.findByPk(req.params.id);
+      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
+
+      const patient = await Patients.findByPk(req.body.PatientId);
+      !patient && throwCustomError("Couldnt find a patient with that id", 404);
+
+      const doctorAppointments = (
+        await this.getDoctorAppointmentsOnDay(doctor?.id, date)
+      ).map((appointment) => appointment.getDataValue("date"));
+
+      const nearestAppointment = this.findDoctorNearestDate(
+        date,
+        doctorAppointments
+      );
+      !nearestAppointment &&
+        throwCustomError("This day is full, try another day!", 400);
+
+      const appointment = await Appointments.create({
+        date: toGMT2(nearestAppointment as Date),
+        SpecialtyId: doctor?.getDataValue("SpecialtyId"),
+        DoctorId: doctor?.id,
+        PatientId: patient?.id,
+      });
+
+      res.status(201).json(appointment);
+    } catch (error) {
+      next(error);
     }
   };
 }

@@ -1,7 +1,9 @@
 import { Router } from "express";
 import AppointmentsController from "../controllers/appointments";
 import authMW from "../middlewares/authMW";
-import { isAdmin } from "../middlewares/rolesMW";
+import { isAdmin, isReceptionist } from "../middlewares/rolesMW";
+import { param, body } from "express-validator";
+import validationMW from "../middlewares/validationMW";
 
 const router = Router();
 const controller = new AppointmentsController();
@@ -11,6 +13,22 @@ router.get(
   authMW,
   isAdmin,
   controller.getAllAppointmentsOnDay
+);
+
+router.post(
+  "/appointments/doctor/:id",
+  authMW,
+  isReceptionist,
+  [
+    param("id")
+      .isInt({ min: 1 })
+      .withMessage("DoctorId should be a positive int."),
+    body("PatientId")
+      .isInt({ min: 1 })
+      .withMessage("PatientId should be a positive int."),
+  ],
+  validationMW,
+  controller.createAppointmentWithSpecificDoctor
 );
 
 export default router;

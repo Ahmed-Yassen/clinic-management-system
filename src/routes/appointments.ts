@@ -60,4 +60,17 @@ router.get(
   controller.getDoctorAppointments
 );
 
+router.get(
+  "/appointments/specialty/:id/on/:date",
+  authMW,
+  isAdmin,
+  [
+    param("id")
+      .isInt({ min: 1 })
+      .withMessage("SpecialtyId should be a positive int."),
+  ],
+  validationMW,
+  controller.getSpecialtyAppointments
+);
+
 export default router;

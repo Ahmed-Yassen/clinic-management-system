@@ -263,4 +263,36 @@ export default class AppointmentsController {
       next(error);
     }
   };
+
+  getSpecialtyAppointments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.params.date));
+      isOffDay(date) && throwCustomError("This is an off day!", 400);
+
+      const specialty = await Specialties.findByPk(req.params.id);
+      !specialty &&
+        throwCustomError("Couldnt find a specialty with that id!", 404);
+
+      const startOfDay = toGMT2(moment(date).hours(openingHour).toDate());
+      const endOfDay = toGMT2(moment(date).hours(closingHour).toDate());
+
+      const appointments = await Appointments.findAll({
+        where: {
+          [Op.and]: [
+            { date: { [Op.between]: [startOfDay, endOfDay] } },
+            { SpecialtyId: specialty?.id },
+          ],
+        },
+        order: [["date", "ASC"]],
+      });
+
+      res.json(appointments);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

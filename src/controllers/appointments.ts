@@ -323,4 +323,32 @@ export default class AppointmentsController {
       next(error);
     }
   };
+
+  getSpecialtyNearestAppointment = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.params.date));
+      this.validateDate(date);
+
+      const specialty = await Specialties.findByPk(req.params.id);
+      !specialty &&
+        throwCustomError("Couldnt find a specialty with that id", 404);
+
+      const [specialtyNearestAppointment, nearestDoctorId] =
+        await this.findSpecialtyNearestDate(date, specialty?.id);
+
+      !specialtyNearestAppointment &&
+        throwCustomError("This day is full!", 400);
+
+      res.json({
+        nearestDate: specialtyNearestAppointment,
+        doctorId: nearestDoctorId,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }

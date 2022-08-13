@@ -86,4 +86,17 @@ router.get(
   controller.getDoctorNearestAppointment
 );
 
+router.get(
+  "/nearestAppointment/specialty/:id/on/:date",
+  authMW,
+  isReceptionist,
+  [
+    param("id")
+      .isInt({ min: 1 })
+      .withMessage("SpecialtyId should be a positive int."),
+  ],
+  validationMW,
+  controller.getSpecialtyNearestAppointment
+);
+
 export default router;

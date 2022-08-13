@@ -236,4 +236,31 @@ export default class AppointmentsController {
       next(error);
     }
   };
+
+  getDoctorAppointments = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const date = toGMT2(new Date(req.params.date));
+      isOffDay(date) && throwCustomError("This is an off day!", 400);
+
+      const doctor = await Doctors.findByPk(req.params.id);
+      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
+
+      const doctorAppointments = await this.getDoctorAppointmentsOnDay(
+        doctor?.id,
+        date
+      );
+      if (doctorAppointments.length === 0)
+        return res.json({
+          msg: `Doctor ${doctor?.fullName} doesnt have appointments on that day!`,
+        });
+
+      res.json(doctorAppointments);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

@@ -47,4 +47,17 @@ router.post(
   controller.createAppointmentWithSpecificDoctor
 );
 
+router.get(
+  "/appointments/doctor/:id/on/:date",
+  authMW,
+  isAdmin,
+  [
+    param("id")
+      .isInt({ min: 1 })
+      .withMessage("DoctorId should be a positive int."),
+  ],
+  validationMW,
+  controller.getDoctorAppointments
+);
+
 export default router;

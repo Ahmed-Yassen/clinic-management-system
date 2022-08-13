@@ -99,4 +99,17 @@ router.get(
   controller.getSpecialtyNearestAppointment
 );
 
+router
+  .route("/appointments/:id")
+  .patch(
+    authMW,
+    isReceptionist,
+    [
+      param("id")
+        .isInt({ min: 1 })
+        .withMessage("AppointmentId should be a positive int."),
+    ],
+    controller.editAppointment
+  );
+
 export default router;

@@ -1,67 +1,55 @@
 import { Response, NextFunction, Request } from "express";
-import { Receptionists } from "../models/receptionists";
+import { Receptionist } from "../models/receptionist";
 import { throwCustomError } from "../utils/helperFunctions";
-import { Users } from "../models/users";
-import { Doctors } from "../models/doctors";
+import { User } from "../models/user";
+import { Doctor } from "../models/doctor";
 import { Specialties } from "../models/specialties";
+import { BadRequestError } from "../errors/bad-request-error";
 
 export default class UserController {
   constructor() {}
 
   private seperateData(requestBody: any, role: string) {
-    const userTableData = {
+    const userTable = {
       email: requestBody.email,
       password: requestBody.password,
       role,
     };
+    delete requestBody.email;
+    delete requestBody.password;
 
-    const roleTableData = { ...requestBody };
-    delete roleTableData.email;
-    delete roleTableData.password;
-
-    return [userTableData, roleTableData];
+    return { userTable, roleTableData: { ...requestBody } };
   }
 
-  private async userEmailExists(userEmail: string) {
-    const duplicateUser = await Users.findOne({ where: { email: userEmail } });
+  private async userEmailExists(email: string) {
+    const duplicateUser = await User.findOne({ where: { email } });
     return duplicateUser;
   }
 
-  private createUser = async (userData: any) => {
-    const user = await Users.create(userData);
-    return user.toJSON();
+  private createUser = async (userData: any): Promise<User> => {
+    const user = await User.create(userData);
+    return user.toJSON() as User;
   };
 
-  createReceptionist = async (req: any, res: Response, next: NextFunction) => {
-    let user: Users | null = null;
-    let receptionist: Receptionists | null = null;
-    try {
-      (await this.userEmailExists(req.body.email)) &&
-        throwCustomError("Email already exists!", 400);
+  createReceptionist = async (req: any, res: Response) => {
+    const role = "receptionist";
+    const { email, password, ...receptionistAttrs } = req.body;
 
-      const [userTableData, roleTableData] = this.seperateData(
-        req.body,
-        "receptionist"
-      );
+    if (await this.userEmailExists(email))
+      throw new BadRequestError("Email already registered!");
 
-      user = await this.createUser(userTableData);
-      roleTableData.UserId = user?.id; //- Attach Foreign Key from users
-      receptionist = await Receptionists.create(roleTableData);
-      res.status(201).json({
-        success: true,
-        fullData: { user, receptionist },
-      });
-    } catch (error) {
-      //- if created row in user table, but an error happened during creating receptionist , remove the row that was created in the users table
-      if (user && !receptionist)
-        await Users.destroy({ where: { email: user.email } });
-      next(error);
-    }
+    const user = await User.create({ email, password, role });
+    const receptionist = await user.$create(role, receptionistAttrs);
+
+    res.status(201).json({
+      success: true,
+      fullData: { user, receptionist },
+    });
   };
 
   createDoctor = async (req: any, res: Response, next: NextFunction) => {
-    let user: Users | null = null;
-    let doctor: Doctors | null = null;
+    let user: User | null = null;
+    let doctor: Doctor | null = null;
     try {
       if (await this.userEmailExists(req.body.email))
         throwCustomError("Email already exists!", 400);
@@ -70,29 +58,28 @@ export default class UserController {
       if (!specialty)
         throwCustomError("There is no specialty with that id", 404);
 
-      const [userTableData, roleTableData] = this.seperateData(
+      const { userTable: userTableData, roleTableData } = this.seperateData(
         req.body,
         "doctor"
       );
-      user = await this.createUser(userTableData);
+      user = (await this.createUser(userTableData)) as User;
       roleTableData.UserId = user?.id; //- Attach Foreign Key from users
-      doctor = await Doctors.create(roleTableData);
+      doctor = await Doctor.create(roleTableData);
       res.status(201).json({
         success: true,
         fullData: { user, doctor },
       });
     } catch (error) {
       //- if created row in user table, but an error happened in during creating a doctor, remove the row that was created in the users table
-      if (user && !doctor)
-        await Users.destroy({ where: { email: user.email } });
+      if (user && !doctor) await User.destroy({ where: { email: user.email } });
       next(error);
     }
   };
 
   async getAllUsers(req: Request, res: Response, next: NextFunction) {
     try {
-      const doctors = await Doctors.findAll();
-      const receptionists = await Receptionists.findAll();
+      const doctors = await Doctor.findAll();
+      const receptionists = await Receptionist.findAll();
 
       res.json({ success: true, doctors, receptionists });
     } catch (err) {
@@ -104,16 +91,16 @@ export default class UserController {
     try {
       if (req.role === "admin")
         throwCustomError("Admin doesnt have a profile!", 400);
-      let user = null;
+      let user: null | Doctor | Receptionist = null;
       switch (req.role) {
         case "doctor":
-          user = await Doctors.findOne({
-            where: { UserId: req.user.id },
+          user = await Doctor.findOne({
+            where: { userId: req.user.id },
           });
           break;
         case "receptionist":
-          user = await Receptionists.findOne({
-            where: { UserId: req.user.id },
+          user = await Receptionist.findOne({
+            where: { userId: req.user.id },
           });
           break;
       }
@@ -125,7 +112,7 @@ export default class UserController {
 
   async getSpecificDoctor(req: any, res: Response, next: NextFunction) {
     try {
-      const doctor = await Doctors.findByPk(req.params.id);
+      const doctor = await Doctor.findByPk(req.params.id);
       if (!doctor) throwCustomError("Couldnt find a doctor with that id", 404);
       res.json({ success: true, doctor });
     } catch (error) {
@@ -135,7 +122,7 @@ export default class UserController {
 
   async getSpecificReceptionist(req: any, res: Response, next: NextFunction) {
     try {
-      const receptionist = await Receptionists.findByPk(req.params.id);
+      const receptionist = await Receptionist.findByPk(req.params.id);
       if (!receptionist)
         throwCustomError("Couldnt find a receptionist with that id", 404);
       res.json({ success: true, receptionist });
@@ -150,7 +137,7 @@ export default class UserController {
     next: NextFunction
   ) {
     try {
-      const receptionist = await Receptionists.findByPk(req.params.id);
+      const receptionist = await Receptionist.findByPk(req.params.id);
       if (!receptionist)
         throwCustomError("Couldnt find a receptionist with that id", 404);
 
@@ -180,7 +167,7 @@ export default class UserController {
           throwCustomError("Couldnt find a specialty with that id", 404);
       }
 
-      const doctor = await Doctors.findByPk(req.params.id);
+      const doctor = await Doctor.findByPk(req.params.id);
       if (!doctor) throwCustomError("Couldnt find a doctor with that id", 404);
       await doctor?.update(req.body);
       res.json({ success: true, doctor });
@@ -204,7 +191,7 @@ export default class UserController {
 
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const deletedUser: Users | null = await Users.findByPk(req.params.id);
+      const deletedUser: User | null = await User.findByPk(req.params.id);
       if (!deletedUser)
         throwCustomError("Couldnt find a user with that id", 404);
 

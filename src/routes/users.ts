@@ -4,12 +4,13 @@ import { body, param } from "express-validator";
 import validationMW from "../middlewares/validationMW";
 import authMW from "../middlewares/authMW";
 import { isAdmin } from "../middlewares/rolesMW";
+import { validateRequest } from "../middlewares/validatate-request";
 
 const router = Router();
 const controller = new userController();
 
 router.post(
-  "/signup/receptionist",
+  "/api/auth/signup/receptionist",
   authMW,
   isAdmin,
   [
@@ -24,13 +25,16 @@ router.post(
     body("phoneNumber")
       .matches(/^01[0125][0-9]{8}$/)
       .withMessage("Incorrect phoneNumber value."),
-    body("address").isString().withMessage("Incorrect address value."),
+    body("address")
+      .optional()
+      .isString()
+      .withMessage("Incorrect address value."),
     body("fullName").isString().withMessage("Incorrect fullName value."),
     body("salary")
-      .isFloat({ min: 2700 })
-      .withMessage("Incorrect Salary value."),
+      .isFloat({ min: 2500 })
+      .withMessage("Salary should be atleast 2500."),
   ],
-  validationMW,
+  validateRequest,
   controller.createReceptionist
 );
 

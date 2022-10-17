@@ -6,7 +6,7 @@
   "scripts": {
     "test": "env-cmd -f ./config/test.env jest --watchAll --runInBand",
     "start": "tsc && nodemon dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
     "build": "tsc -p ."
   },
   "keywords": [],
@@ -14,8 +14,10 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.1",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
+    "express-async-errors": "^3.1.1",
     "express-validator": "^6.14.2",
     "jsonwebtoken": "^8.5.1",
     "moment": "^2.29.4",

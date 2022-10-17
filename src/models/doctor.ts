@@ -63,6 +63,7 @@ export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
   @Column({
     type: DataType.INTEGER,
     allowNull: false,
+    onDelete: "CASCADE",
   })
   specialtyId!: number;
 

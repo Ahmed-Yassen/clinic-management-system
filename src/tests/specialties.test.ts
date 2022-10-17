@@ -11,7 +11,7 @@ beforeEach(async () => {
 
 test("Should create specialty as admin", async () => {
   const response = await request(app)
-    .post("/specialties")
+    .post("/api/specialties")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Skin Care" })
     .expect(201);
@@ -20,7 +20,7 @@ test("Should create specialty as admin", async () => {
 
 test("Should get all specialties", async () => {
   const response = await request(app)
-    .get("/specialties")
+    .get("/api/specialties")
     .set("Authorization", `Bearer ${adminToken}`)
     .expect(200);
   expect(response.body.specialties[0]).toMatchObject(specialty);
@@ -28,7 +28,7 @@ test("Should get all specialties", async () => {
 
 test("Should update specialty as admin", async () => {
   const response = await request(app)
-    .patch("/specialties/1")
+    .patch("/api/specialties/1")
     .set("Authorization", `Bearer ${adminToken}`)
     .send({ name: "Nose, Ear & Throat (NET)" })
     .expect(200);
@@ -39,7 +39,7 @@ test("Should update specialty as admin", async () => {
 
 test("Should delete specialty as admin", async () => {
   await request(app)
-    .delete("/specialties/1")
+    .delete("/api/specialties/1")
     .set("Authorization", `Bearer ${adminToken}`)
     .expect(200);
 });

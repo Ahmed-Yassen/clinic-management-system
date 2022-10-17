@@ -26,7 +26,7 @@ router
   .get(authMW, controller.getAllSpecialties);
 
 router
-  .route("/specialties/:id")
+  .route("/api/specialties/:id")
   .patch(
     authMW,
     isAdmin,
@@ -36,7 +36,7 @@ router
         .withMessage("Specialty id should be number!"),
       body("name").isString().withMessage("Specialty name should be text!"),
     ],
-    validationMW,
+    validateRequest,
     controller.updateSpecialty
   )
   .delete(
@@ -47,7 +47,7 @@ router
         .isInt({ min: 1 })
         .withMessage("Specialty id should be number!"),
     ],
-    validationMW,
+    validateRequest,
     controller.deleteSpecialty
   );
 export default router;

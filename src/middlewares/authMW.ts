@@ -8,6 +8,15 @@ import { throwCustomError } from "../utils/helperFunctions";
 interface UserPayload {
   id: string;
 }
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: User;
+    }
+  }
+}
+
 export default async (req: any, res: Response, next: NextFunction) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
   if (!token) throw new NotAuthenticatedError();

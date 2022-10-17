@@ -1,8 +1,8 @@
-import { Users } from "../../models/users";
+import { User } from "../../models/user";
 import jwt, { Secret } from "jsonwebtoken";
-import { Specialties } from "../../models/specialties";
-import { Receptionists } from "../../models/receptionists";
-import { Doctors } from "../../models/doctors";
+import { Specialty } from "../../models/specialty";
+import { Receptionist } from "../../models/receptionist";
+import { Doctor } from "../../models/doctor";
 import { Patients } from "../../models/patients";
 
 const adminToken = jwt.sign({ id: 1 }, process.env.JWT_SECRET as Secret);
@@ -13,13 +13,14 @@ const admin = {
 };
 
 const specialty = { name: "Eyes" };
+
 const receptionistToken = jwt.sign({ id: 2 }, process.env.JWT_SECRET as Secret);
 const receptionist = {
   fullName: "Pam",
   address: "Moharam Beek",
   phoneNumber: "01125986761",
   salary: 2850,
-  UserId: 2,
+  userId: 2,
 };
 
 const doctorToken = jwt.sign({ id: 3 }, process.env.JWT_SECRET as Secret);
@@ -28,42 +29,42 @@ const doctor = {
   address: "Smouha",
   phoneNumber: "01225986761",
   examinationPrice: 65,
-  UserId: 3,
-  SpecialtyId: 1,
+  userId: 3,
+  specialtyId: 1,
 };
 
 const patient = { fullName: "Ahmed Yassen", phoneNumber: "01125986761" };
 
 const populateTestingDB = async () => {
-  await Users.create({
-    ...admin,
+  await User.create({
+    ...(admin as User),
   });
 
-  await Specialties.create({ ...specialty });
+  await Specialty.create({ ...specialty });
 
-  await Users.create({
+  await User.create({
     email: "receptioninst@test.com",
     password: "receptioninstPass",
     role: "receptionist",
   });
 
-  await Receptionists.create({
+  await Receptionist.create({
     ...receptionist,
   });
 
-  await Users.create({
+  await User.create({
     email: "doctor@test.com",
     password: "doctorPass",
     role: "doctor",
   });
 
-  await Doctors.create({
+  await Doctor.create({
     ...doctor,
   });
 
-  await Patients.create({
-    ...patient,
-  });
+  // await Patients.create({
+  //   ...patient,
+  // });
 };
 
 export {
@@ -75,5 +76,5 @@ export {
   doctorToken,
   receptionistToken,
   specialty,
-  patient,
+  // patient,
 };

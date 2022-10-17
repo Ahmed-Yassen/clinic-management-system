@@ -44,7 +44,7 @@ export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
   phoneNumber!: string;
 
   @Column({
-    type: DataType.DECIMAL,
+    type: DataType.DOUBLE,
     allowNull: false,
   })
   examinationPrice!: number;

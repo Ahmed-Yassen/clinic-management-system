@@ -1,7 +1,6 @@
 import { Router } from "express";
 import userController from "../controllers/users";
 import { body, param } from "express-validator";
-import validationMW from "../middlewares/validationMW";
 import authMW from "../middlewares/authMW";
 import { isAdmin } from "../middlewares/rolesMW";
 import { validateRequest } from "../middlewares/validatate-request";
@@ -70,11 +69,11 @@ router.post(
   controller.createDoctor
 );
 
-router.get("/usersAll", authMW, isAdmin, controller.getAllUsers);
-router.get("/users", authMW, controller.getMyProfile);
+router.get("/api/users", authMW, isAdmin, controller.getAllUsers);
+router.get("/api/users/profile", authMW, controller.getMyProfile);
 
 router
-  .route("/users/doctors/:id")
+  .route("/api/users/doctors/:id")
   .get(
     authMW,
     isAdmin,
@@ -83,8 +82,8 @@ router
         .isInt({ min: 1 })
         .withMessage("Receptionist id must be a valid number."),
     ],
-    validationMW,
-    controller.getSpecificDoctor
+    validateRequest,
+    controller.getDoctorById
   )
   .patch(
     authMW,
@@ -96,18 +95,18 @@ router
       body("examinationPrice")
         .optional()
         .isFloat({ min: 50 })
-        .withMessage("Incorrect ExaminationPrice value."),
-      body("SpecialtyId")
+        .withMessage("Incorrect examinationPrice value."),
+      body("specialtyId")
         .optional()
         .isInt({ min: 1 })
-        .withMessage("Incorrect SpecialtyId value."),
+        .withMessage("Incorrect specialtyId value."),
     ],
-    validationMW,
+    validateRequest,
     controller.updateDoctorAsAdmin
   );
 
 router
-  .route("/users/receptionists/:id")
+  .route("/api/users/receptionists/:id")
   .get(
     authMW,
     isAdmin,
@@ -116,8 +115,8 @@ router
         .isInt({ min: 1 })
         .withMessage("Receptionist id must be a valid number."),
     ],
-    validationMW,
-    controller.getSpecificReceptionist
+    validateRequest,
+    controller.getReceptionistById
   )
   .patch(
     authMW,
@@ -130,26 +129,27 @@ router
         .isFloat({ min: 2700 })
         .withMessage("Incorrect Salary value."),
     ],
-    validationMW,
+    validateRequest,
     controller.updateReceptionistSalary
   );
 
 router.patch(
-  "/users/changePassword",
+  "/api/users/changePassword",
   authMW,
   body("password")
+    .isAlphanumeric()
     .isLength({ min: 8, max: 32 })
     .withMessage("Password should be between 8 & 32 characters"),
-  validationMW,
+  validateRequest,
   controller.updateUserPassword
 );
 
 router.delete(
-  "/users/:id",
+  "/api/users/:id",
   authMW,
   isAdmin,
   [param("id").isInt({ min: 1 }).withMessage("Invalid user id value.")],
-  validationMW,
+  validateRequest,
   controller.deleteUser
 );
 

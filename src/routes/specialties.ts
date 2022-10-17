@@ -4,12 +4,13 @@ import authMW from "../middlewares/authMW";
 import { isAdmin } from "../middlewares/rolesMW";
 import validationMW from "../middlewares/validationMW";
 import SpecialtyController from "../controllers/specialties";
+import { validateRequest } from "../middlewares/validatate-request";
 
 const router = Router();
 const controller = new SpecialtyController();
 
 router
-  .route("/specialties")
+  .route("/api/specialties")
   .post(
     authMW,
     isAdmin,
@@ -19,7 +20,7 @@ router
         .withMessage("Specialty name should be text!")
         .toLowerCase(),
     ],
-    validationMW,
+    validateRequest,
     controller.createSpecialty
   )
   .get(authMW, controller.getAllSpecialties);

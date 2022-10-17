@@ -1,27 +1,27 @@
 import { NextFunction, Request, Response } from "express";
-import { Specialties } from "../models/specialties";
+import { BadRequestError } from "../errors/bad-request-error";
+import { Specialty } from "../models/specialty";
 import { throwCustomError } from "../utils/helperFunctions";
 
 export default class SpecialtiesController {
   constructor() {}
 
-  async createSpecialty(req: Request, res: Response, next: NextFunction) {
-    try {
-      let specialty = await Specialties.findOne({
-        where: { name: req.body.name },
-      });
-      if (specialty) throwCustomError("This specialty already exists!", 400);
+  async createSpecialty(req: Request, res: Response) {
+    const { name } = req.body;
 
-      specialty = await Specialties.create({ ...req.body });
-      res.status(201).json({ sucess: true, specialty });
-    } catch (error) {
-      next(error);
-    }
+    let specialty = await Specialty.findOne({
+      where: { name },
+    });
+    if (specialty) throw new BadRequestError("This specialty already exists!");
+
+    specialty = await Specialty.create({ name });
+
+    res.status(201).json({ success: true, specialty });
   }
 
   async getAllSpecialties(req: Request, res: Response, next: NextFunction) {
     try {
-      const specialties = await Specialties.findAll();
+      const specialties = await Specialty.findAll();
       res.json({ success: true, specialties });
     } catch (error) {
       next(error);
@@ -30,7 +30,7 @@ export default class SpecialtiesController {
 
   async updateSpecialty(req: Request, res: Response, next: NextFunction) {
     try {
-      let specialty = await Specialties.findByPk(req.params.id);
+      let specialty = await Specialty.findByPk(req.params.id);
       if (!specialty)
         throwCustomError("Couldnt find a specialty with that id!", 404);
 
@@ -43,7 +43,7 @@ export default class SpecialtiesController {
 
   async deleteSpecialty(req: Request, res: Response, next: NextFunction) {
     try {
-      let specialty = await Specialties.findByPk(req.params.id);
+      let specialty = await Specialty.findByPk(req.params.id);
       if (!specialty)
         throwCustomError("Couldnt find a specialty with that id!", 404);
 

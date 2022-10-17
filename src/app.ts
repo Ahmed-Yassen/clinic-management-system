@@ -1,4 +1,8 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
+import "express-async-errors";
+import { NotFoundError } from "./errors/not-found-error";
+import { errorHandler } from "./middlewares/error-handler";
+import { EnvMissingError } from "./errors/env-missing-error";
 
 import usersRouter from "./routes/users";
 import loginRouter from "./routes/login";
@@ -9,7 +13,9 @@ import doctorRouter from "./routes/doctors";
 import appointmentsRouter from "./routes/appointments";
 
 import dotenv from "dotenv";
-dotenv.config({ path: __dirname + "/../config/dev.env" });
+dotenv.config({ path: __dirname + `/../config/dev.env` });
+
+if (!process.env.JWT_SECRET) throw new EnvMissingError("JWT_SECRET");
 
 let app = express();
 app.use(express.json());
@@ -24,13 +30,12 @@ app.use([
   appointmentsRouter,
 ]);
 
+//- URL not found
 app.use((req, res, next) => {
-  res.status(404).json({ success: false, message: "URL NOT FOUND!" });
+  throw new NotFoundError("URL");
 });
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  let status = err.status || 500;
-  res.status(status).json({ success: false, message: err.message });
-});
+//- Catch all errors
+app.use(errorHandler);
 
 export default app;

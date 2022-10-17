@@ -1,17 +1,17 @@
 import app from "./app";
 import connection from "./db";
-import { Users } from "./models/users";
+import { User } from "./models/user";
 
 connection
-  .sync()
+  .sync({ force: process.env.NODE_ENV === "development" })
   .then(async () => {
     console.log("DB Synced Successfully!");
-    //- Create Admin Automatically Only On First Connection
-    const existingAdmin = await Users.findByPk(1);
+    //- Create Admin Only On First Connection
+    const existingAdmin = await User.findByPk(1);
     if (!existingAdmin) {
-      await Users.create({
-        email: process.env.ADMIN_EMAIL,
-        password: process.env.ADMIN_PASSWORD,
+      await User.create({
+        email: process.env.ADMIN_EMAIL as string,
+        password: process.env.ADMIN_PASSWORD as string,
         role: "admin",
       });
       console.log("Admin Created!");

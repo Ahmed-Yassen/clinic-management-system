@@ -2,6 +2,7 @@ import { Sequelize } from "sequelize-typescript";
 import { Dialect } from "sequelize/types";
 import { EnvMissingError } from "./errors/env-missing-error";
 import { Doctor } from "./models/doctor";
+import { Patient } from "./models/patient";
 import { Receptionist } from "./models/receptionist";
 import { Specialty } from "./models/specialty";
 import { User } from "./models/user";
@@ -24,7 +25,7 @@ const connection = new Sequelize({
   password,
   database,
   logging: false,
-  models: [User, Doctor, Receptionist, Specialty],
+  models: [User, Doctor, Receptionist, Specialty, Patient],
 });
 
 // Patients.hasMany(Appointments, {

@@ -8,7 +8,7 @@ const router = Router();
 const controller = new PatientsController();
 
 router
-  .route("/patients")
+  .route("/api/patients")
   .get(authMW, controller.getAllPatients)
   .post(
     authMW,
@@ -24,7 +24,7 @@ router
   );
 
 router
-  .route("/patients/:id")
+  .route("/api/patients/:id")
   .patch(
     authMW,
     isReceptionist,

@@ -17,7 +17,7 @@ beforeEach(async () => {
 
 test("Should create patient as receptionist", async () => {
   const response = await request(app)
-    .post("/patients")
+    .post("/api/patients")
     .set("Authorization", `Bearer ${receptionistToken}`)
     .send({
       fullName: "Sick Patient",
@@ -32,15 +32,15 @@ test("Should create patient as receptionist", async () => {
 
 test("Should get all patients for any user", async () => {
   const response = await request(app)
-    .get("/patients")
+    .get("/api/patients")
     .set("Authorization", `Bearer ${adminToken}`)
     .expect(200);
   await request(app)
-    .get("/patients")
+    .get("/api/patients")
     .set("Authorization", `Bearer ${receptionistToken}`)
     .expect(200);
   await request(app)
-    .get("/patients")
+    .get("/api/patients")
     .set("Authorization", `Bearer ${doctorToken}`)
     .expect(200);
   expect(response.body[0]).toMatchObject(patient);
@@ -48,7 +48,7 @@ test("Should get all patients for any user", async () => {
 
 test("Should update patient as receptionist", async () => {
   const response = await request(app)
-    .patch("/patients/1")
+    .patch("/api/patients/1")
     .set("Authorization", `Bearer ${receptionistToken}`)
     .send({
       fullName: "Dexter Morgan",
@@ -61,7 +61,7 @@ test("Should update patient as receptionist", async () => {
 
 test("Should delete patient as receptionist", async () => {
   const response = await request(app)
-    .delete("/patients/1")
+    .delete("/api/patients/1")
     .set("Authorization", `Bearer ${receptionistToken}`)
     .expect(200);
   expect(response.body.patient).toMatchObject({

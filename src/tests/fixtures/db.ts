@@ -3,7 +3,7 @@ import jwt, { Secret } from "jsonwebtoken";
 import { Specialty } from "../../models/specialty";
 import { Receptionist } from "../../models/receptionist";
 import { Doctor } from "../../models/doctor";
-import { Patients } from "../../models/patients";
+import { Patient } from "../../models/patient";
 
 const adminToken = jwt.sign({ id: 1 }, process.env.JWT_SECRET as Secret);
 const admin = {
@@ -62,9 +62,9 @@ const populateTestingDB = async () => {
     ...doctor,
   });
 
-  // await Patients.create({
-  //   ...patient,
-  // });
+  await Patient.create({
+    ...patient,
+  });
 };
 
 export {
@@ -76,5 +76,5 @@ export {
   doctorToken,
   receptionistToken,
   specialty,
-  // patient,
+  patient,
 };

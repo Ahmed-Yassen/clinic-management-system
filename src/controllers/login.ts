@@ -1,25 +1,22 @@
 import { NextFunction, Request, Response } from "express";
-import { Users } from "../models/users";
+import { User } from "../models/user";
 import { throwCustomError } from "../utils/helperFunctions";
 import bcrypt from "bcrypt";
 import jwt, { Secret } from "jsonwebtoken";
+import { BadRequestError } from "../errors/bad-request-error";
 
-export default async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const user = await Users.findOne({ where: { email: req.body.email } });
-    if (!user) throwCustomError("Invalid Email or Password!", 400);
-    const isValidPassword = await bcrypt.compare(
-      req.body.password,
-      user?.password as string
-    );
+export default async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-    if (!isValidPassword) throwCustomError("Invalid Email or Password!", 400);
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw new BadRequestError("Invalid Email or Password!");
 
-    const token = jwt.sign({ id: user?.id }, process.env.JWT_SECRET as Secret, {
-      expiresIn: "1 day",
-    });
-    res.json({ success: true, token });
-  } catch (error) {
-    next(error);
-  }
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) throw new BadRequestError("Invalid Email or Password!");
+
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as Secret, {
+    expiresIn: "1 day",
+  });
+
+  res.json({ success: true, token });
 };

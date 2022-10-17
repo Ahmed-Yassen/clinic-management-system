@@ -1,36 +1,26 @@
-import { NextFunction, Response } from "express";
-import { Receptionists } from "../models/receptionists";
+import { Request, Response } from "express";
+import { BadRequestError } from "../errors/bad-request-error";
+import { Receptionist } from "../models/receptionist";
 import { throwCustomError } from "../utils/helperFunctions";
 
 export default class ReceptionistsController {
   constructor() {}
 
-  async updateProfile(req: any, res: Response, next: NextFunction) {
-    try {
-      const allowedFields = [
-        "phoneNumber",
-        "address",
-        "fullName",
-        "dateOfBirth",
-      ];
-      const requestFields = Object.keys(req.body);
-      const isValidUpdate = requestFields.every((field) =>
-        allowedFields.includes(field)
+  async updateProfile(req: Request, res: Response) {
+    const allowedFields = ["phoneNumber", "address", "fullName", "dateOfBirth"];
+    const requestFields = Object.keys(req.body);
+
+    const isValidUpdate = requestFields.every((field) =>
+      allowedFields.includes(field)
+    );
+    if (!isValidUpdate)
+      throw new BadRequestError(
+        "Receptionists may only update phoneNumber, fullName, address, dateOfBirth"
       );
-      if (!isValidUpdate)
-        throwCustomError(
-          "Receptionists may only update phoneNumber, fullName, address, dateOfBirth",
-          400
-        );
 
-      const receptionist = await Receptionists.findOne({
-        where: { UserId: req.user.id },
-      });
+    const receptionist = await req.user?.$get("receptionist");
+    await receptionist?.update(req.body);
 
-      await receptionist?.update(req.body);
-      res.json({ success: true, receptionist });
-    } catch (error) {
-      next(error);
-    }
+    res.json({ success: true, receptionist });
   }
 }

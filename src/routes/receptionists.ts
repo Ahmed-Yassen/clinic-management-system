@@ -2,12 +2,14 @@ import { Router } from "express";
 import ReceptionistsController from "../controllers/receptionists";
 import authMW from "../middlewares/authMW";
 import { isReceptionist } from "../middlewares/rolesMW";
-import validationMW from "../middlewares/validationMW";
 import { body } from "express-validator";
+import { validateRequest } from "../middlewares/validatate-request";
+
 const router = Router();
 const controller = new ReceptionistsController();
 
-router.route("/receptionists").patch(
+router.patch(
+  "/api/users/receptionists",
   authMW,
   isReceptionist,
   [
@@ -21,7 +23,8 @@ router.route("/receptionists").patch(
       .matches(/^01[0125][0-9]{8}$/)
       .withMessage("Invalid phoneNumber value."),
   ],
-  validationMW,
+  validateRequest,
   controller.updateProfile
 );
+
 export default router;

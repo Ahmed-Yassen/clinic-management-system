@@ -11,7 +11,7 @@ beforeEach(async () => {
 
 test("Should update receptionist profile as receptionist", async () => {
   const response = await request(app)
-    .patch("/receptionists")
+    .patch("/api/users/receptionists")
     .set("Authorization", `Bearer ${receptionistToken}`)
     .send({
       phoneNumber: "01234567890",

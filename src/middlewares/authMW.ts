@@ -1,9 +1,8 @@
 import { NextFunction, Response } from "express";
-import jwt, { JwtPayload, Secret } from "jsonwebtoken";
+import jwt, { Secret } from "jsonwebtoken";
 import { NotAuthenticatedError } from "../errors/not-authenticated.error";
 import { NotFoundError } from "../errors/not-found-error";
 import { User } from "../models/user";
-import { throwCustomError } from "../utils/helperFunctions";
 
 interface UserPayload {
   id: string;

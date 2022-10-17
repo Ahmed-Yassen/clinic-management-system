@@ -11,7 +11,7 @@ beforeEach(async () => {
 
 test("Should update doctor profile as doctor", async () => {
   const response = await request(app)
-    .patch("/doctors")
+    .patch("/api/users/doctors")
     .set("Authorization", `Bearer ${doctorToken}`)
     .send({
       phoneNumber: "01234567890",

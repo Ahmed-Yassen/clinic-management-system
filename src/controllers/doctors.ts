@@ -1,29 +1,24 @@
-import { NextFunction, Response } from "express";
-import { Doctors } from "../models/doctors";
+import { Request, Response } from "express";
+import { BadRequestError } from "../errors/bad-request-error";
+import { Doctor } from "../models/doctor";
 import { throwCustomError } from "../utils/helperFunctions";
 
 export default class DoctorsController {
-  constructor() {}
+  async updateProfile(req: Request, res: Response) {
+    const { user } = req;
+    const allowedFields = ["phoneNumber", "address", "fullName"];
+    const requestFields = Object.keys(req.body);
 
-  async updateProfile(req: any, res: Response, next: NextFunction) {
-    try {
-      const allowedFields = ["phoneNumber", "address", "fullName"];
-      const requestFields = Object.keys(req.body);
-      const isValidUpdate = requestFields.every((field) =>
-        allowedFields.includes(field)
+    const isValidUpdate = requestFields.every((field) =>
+      allowedFields.includes(field)
+    );
+    if (!isValidUpdate)
+      throw new BadRequestError(
+        "Doctors can only update phoneNumber, address, fullName"
       );
-      if (!isValidUpdate)
-        throwCustomError(
-          "Doctors can only update phoneNumber, address, fullName",
-          400
-        );
-      const doctor = await Doctors.findOne({
-        where: { UserId: req.user.id },
-      });
-      await doctor?.update(req.body);
-      res.json({ success: true, doctor });
-    } catch (error) {
-      next(error);
-    }
+
+    const doctor = await user?.$get("doctor");
+    await doctor?.update(req.body);
+    res.json({ success: true, doctor });
   }
 }

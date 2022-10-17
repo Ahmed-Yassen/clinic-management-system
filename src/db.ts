@@ -16,7 +16,7 @@ const username = process.env.DB_USERNAME;
 if (!username) throw new EnvMissingError("DB_USERNAME");
 
 const password = process.env.DB_PASSWORD;
-if (!password) throw new EnvMissingError("DB_PASSWORD").serializeErrors();
+if (!password) throw new EnvMissingError("DB_PASSWORD");
 
 const connection = new Sequelize({
   dialect,
@@ -24,36 +24,8 @@ const connection = new Sequelize({
   password,
   database,
   logging: false,
-  // models: [__dirname + "/models/"],
   models: [User, Doctor, Receptionist, Specialty],
 });
-
-/** One To One */
-// Users.hasOne(Receptionists, {
-//   foreignKey: {
-//     allowNull: false,
-//   },
-//   onDelete: "CASCADE",
-//   hooks: true,
-// });
-// Receptionists.belongsTo(Users);
-
-// /** One To Many */
-// Specialties.hasMany(Doctors, {
-//   foreignKey: {
-//     allowNull: false,
-//   },
-//   hooks: true,
-// });
-// Doctors.belongsTo(Specialties);
-
-// Specialties.hasMany(Appointments, {
-//   foreignKey: {
-//     allowNull: false,
-//   },
-//   hooks: true,
-// });
-// Appointments.belongsTo(Specialties);
 
 // Patients.hasMany(Appointments, {
 //   foreignKey: {

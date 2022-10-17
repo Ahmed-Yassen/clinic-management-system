@@ -3,13 +3,13 @@ import { body } from "express-validator";
 import DoctorsController from "../controllers/doctors";
 import authMW from "../middlewares/authMW";
 import { isDoctor } from "../middlewares/rolesMW";
-import validationMW from "../middlewares/validationMW";
+import { validateRequest } from "../middlewares/validatate-request";
 
 const router = Router();
 const controller = new DoctorsController();
 
 router.patch(
-  "/doctors",
+  "/api/users/doctors",
   authMW,
   isDoctor,
   [
@@ -23,7 +23,7 @@ router.patch(
       .matches(/^01[0125][0-9]{8}$/)
       .withMessage("Invalid phoneNumber value."),
   ],
-  validationMW,
+  validateRequest,
   controller.updateProfile
 );
 

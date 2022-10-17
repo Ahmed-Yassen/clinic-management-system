@@ -39,7 +39,7 @@ router.post(
 );
 
 router.post(
-  "/signup/doctor",
+  "/api/auth/signup/doctor",
   authMW,
   isAdmin,
   [
@@ -54,16 +54,19 @@ router.post(
     body("phoneNumber")
       .matches(/^01[0125][0-9]{8}$/)
       .withMessage("Incorrect phoneNumber value."),
-    body("address").isString().withMessage("Incorrect address value."),
+    body("address")
+      .optional()
+      .isString()
+      .withMessage("Incorrect address value."),
     body("fullName").isString().withMessage("Incorrect fullName value."),
     body("examinationPrice")
       .isFloat({ min: 50 })
-      .withMessage("Incorrect ExaminationPrice value."),
-    body("SpecialtyId")
+      .withMessage("Incorrect ExaminationPrice value, should be atleast 50."),
+    body("specialtyId")
       .isInt({ min: 1 })
-      .withMessage("Incorrect SpecialtyId value."),
+      .withMessage("Incorrect specialtyId value."),
   ],
-  validationMW,
+  validateRequest,
   controller.createDoctor
 );
 

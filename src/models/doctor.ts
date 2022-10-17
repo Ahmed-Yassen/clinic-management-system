@@ -7,6 +7,7 @@ import {
   BelongsTo,
 } from "sequelize-typescript";
 import { Optional } from "sequelize/types";
+import { Specialty } from "./specialty";
 import { User } from "./user";
 
 interface DoctorAttributes {
@@ -57,4 +58,14 @@ export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
 
   @BelongsTo(() => User)
   user!: User;
+
+  @ForeignKey(() => Specialty)
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  specialtyId!: number;
+
+  @BelongsTo(() => Specialty)
+  specialty!: Specialty;
 }

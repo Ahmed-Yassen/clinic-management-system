@@ -3,6 +3,7 @@ import { Dialect } from "sequelize/types";
 import { EnvMissingError } from "./errors/env-missing-error";
 import { Doctor } from "./models/doctor";
 import { Receptionist } from "./models/receptionist";
+import { Specialty } from "./models/specialty";
 import { User } from "./models/user";
 
 const dialect = process.env.DB_DIALECT as Dialect;
@@ -24,7 +25,7 @@ const connection = new Sequelize({
   database,
   logging: false,
   // models: [__dirname + "/models/"],
-  models: [User, Doctor, Receptionist],
+  models: [User, Doctor, Receptionist, Specialty],
 });
 
 /** One To One */

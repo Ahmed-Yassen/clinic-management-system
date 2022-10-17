@@ -3,8 +3,9 @@ import { Receptionist } from "../models/receptionist";
 import { throwCustomError } from "../utils/helperFunctions";
 import { User } from "../models/user";
 import { Doctor } from "../models/doctor";
-import { Specialties } from "../models/specialties";
+import { Specialty } from "../models/specialty";
 import { BadRequestError } from "../errors/bad-request-error";
+import { NotFoundError } from "../errors/not-found-error";
 
 export default class UserController {
   constructor() {}
@@ -47,33 +48,23 @@ export default class UserController {
     });
   };
 
-  createDoctor = async (req: any, res: Response, next: NextFunction) => {
-    let user: User | null = null;
-    let doctor: Doctor | null = null;
-    try {
-      if (await this.userEmailExists(req.body.email))
-        throwCustomError("Email already exists!", 400);
+  createDoctor = async (req: any, res: Response) => {
+    const role = "doctor";
+    const { email, password, ...doctorAttrs } = req.body;
 
-      const specialty = await Specialties.findByPk(req.body.SpecialtyId);
-      if (!specialty)
-        throwCustomError("There is no specialty with that id", 404);
+    if (await this.userEmailExists(email))
+      throw new BadRequestError("Email already registered!");
 
-      const { userTable: userTableData, roleTableData } = this.seperateData(
-        req.body,
-        "doctor"
-      );
-      user = (await this.createUser(userTableData)) as User;
-      roleTableData.UserId = user?.id; //- Attach Foreign Key from users
-      doctor = await Doctor.create(roleTableData);
-      res.status(201).json({
-        success: true,
-        fullData: { user, doctor },
-      });
-    } catch (error) {
-      //- if created row in user table, but an error happened in during creating a doctor, remove the row that was created in the users table
-      if (user && !doctor) await User.destroy({ where: { email: user.email } });
-      next(error);
-    }
+    const specialty = await Specialty.findByPk(doctorAttrs.specialtyId);
+    if (!specialty) throw new NotFoundError("specialty");
+
+    const user = await User.create({ email, password, role });
+    const doctor = await user.$create(role, doctorAttrs);
+
+    res.status(201).json({
+      success: true,
+      fullData: { user, doctor },
+    });
   };
 
   async getAllUsers(req: Request, res: Response, next: NextFunction) {
@@ -162,7 +153,7 @@ export default class UserController {
         );
 
       if (req.body.SpecialtyId) {
-        const specialty = await Specialties.findByPk(req.body.SpecialtyId);
+        const specialty = await Specialty.findByPk(req.body.SpecialtyId);
         if (!specialty)
           throwCustomError("Couldnt find a specialty with that id", 404);
       }

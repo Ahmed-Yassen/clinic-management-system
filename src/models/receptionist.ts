@@ -22,9 +22,7 @@ interface ReceptionistAttributes {
 interface ReceptionsCreationAttributes
   extends Optional<ReceptionistAttributes, "id"> {}
 
-@Table({
-  timestamps: false,
-})
+@Table({ timestamps: false })
 export class Receptionist extends Model<
   ReceptionistAttributes,
   ReceptionsCreationAttributes

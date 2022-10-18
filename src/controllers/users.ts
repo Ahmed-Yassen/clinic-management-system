@@ -83,7 +83,7 @@ export default class UserController {
     res.json({ success: true, doctor });
   }
 
-  async getReceptionistById(req: any, res: Response) {
+  async getReceptionistById(req: Request, res: Response) {
     const receptionist = await Receptionist.findByPk(req.params.id);
     if (!receptionist) throw new NotFoundError("receptionist");
 
@@ -130,7 +130,7 @@ export default class UserController {
     if (!password) throw new BadRequestError("Only update password");
 
     await req.user?.update({ password });
-    return res.json({ success: true, msg: "Password Updated!" });
+    res.json({ success: true, msg: "Password Updated!" });
   }
 
   async deleteUser(req: Request, res: Response) {
@@ -139,6 +139,6 @@ export default class UserController {
 
     await user?.destroy();
 
-    return res.json({ success: true, user });
+    res.json({ success: true, user });
   }
 }

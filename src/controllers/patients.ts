@@ -2,17 +2,14 @@ import { Request, Response } from "express";
 import { BadRequestError } from "../errors/bad-request-error";
 import { NotFoundError } from "../errors/not-found-error";
 import { Patient } from "../models/patient";
-import { throwCustomError } from "../utils/helperFunctions";
 
 export default class PatientsController {
-  constructor() {}
-
   async getAllPatients(req: Request, res: Response) {
     const patients = await Patient.findAll();
-    res.json(patients);
+    res.json({ success: true, patients });
   }
 
-  async createPatient(req: any, res: Response) {
+  async createPatient(req: Request, res: Response) {
     const patient = await Patient.create({ ...req.body });
     res.status(201).json({ success: true, patient });
   }

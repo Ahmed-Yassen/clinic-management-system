@@ -1,6 +1,6 @@
 import { Table, Model, Column, DataType } from "sequelize-typescript";
 
-@Table
+@Table({ timestamps: false })
 export class Patient extends Model {
   @Column({
     type: DataType.STRING,

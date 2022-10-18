@@ -22,9 +22,7 @@ interface DoctorAttributes {
 
 interface DoctorCreationAttributes extends Optional<DoctorAttributes, "id"> {}
 
-@Table({
-  timestamps: false,
-})
+@Table({ timestamps: false })
 export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
   @Column({
     type: DataType.STRING,

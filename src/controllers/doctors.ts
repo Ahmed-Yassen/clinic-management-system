@@ -1,7 +1,5 @@
 import { Request, Response } from "express";
 import { BadRequestError } from "../errors/bad-request-error";
-import { Doctor } from "../models/doctor";
-import { throwCustomError } from "../utils/helperFunctions";
 
 export default class DoctorsController {
   async updateProfile(req: Request, res: Response) {

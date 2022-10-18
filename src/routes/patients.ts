@@ -4,6 +4,7 @@ import authMW from "../middlewares/authMW";
 import validationMW from "../middlewares/validationMW";
 import { isReceptionist } from "../middlewares/rolesMW";
 import { body, param } from "express-validator";
+
 const router = Router();
 const controller = new PatientsController();
 

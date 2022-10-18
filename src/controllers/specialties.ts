@@ -1,12 +1,9 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { BadRequestError } from "../errors/bad-request-error";
 import { NotFoundError } from "../errors/not-found-error";
 import { Specialty } from "../models/specialty";
-import { throwCustomError } from "../utils/helperFunctions";
 
 export default class SpecialtiesController {
-  constructor() {}
-
   async createSpecialty(req: Request, res: Response) {
     const { name } = req.body;
 

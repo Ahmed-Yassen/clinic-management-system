@@ -17,9 +17,12 @@ interface UserAttributes {
   email: string;
   password: string;
   role: string;
+  doctor: Doctor;
+  receptionist: Receptionist;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
+interface UserCreationAttributes
+  extends Optional<UserAttributes, "id" | "doctor" | "receptionist"> {}
 interface UserOutputAttributes extends Optional<UserAttributes, "password"> {}
 
 @Table({ timestamps: false })

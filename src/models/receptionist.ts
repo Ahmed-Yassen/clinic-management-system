@@ -17,10 +17,11 @@ interface ReceptionistAttributes {
   phoneNumber: string;
   address?: string;
   userId: number;
+  user: User;
 }
 
 interface ReceptionsCreationAttributes
-  extends Optional<ReceptionistAttributes, "id"> {}
+  extends Optional<ReceptionistAttributes, "id" | "user"> {}
 
 @Table({ timestamps: false })
 export class Receptionist extends Model<

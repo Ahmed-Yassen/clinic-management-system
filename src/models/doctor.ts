@@ -5,8 +5,10 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
+  HasMany,
 } from "sequelize-typescript";
 import { Optional } from "sequelize/types";
+import { Appointment } from "./appointment";
 import { Specialty } from "./specialty";
 import { User } from "./user";
 
@@ -17,10 +19,17 @@ interface DoctorAttributes {
   phoneNumber: string;
   examinationPrice: number;
   userId: number;
+  user: User;
   specialtyId: number;
+  specialty: Specialty;
+  appointments: Appointment[];
 }
 
-interface DoctorCreationAttributes extends Optional<DoctorAttributes, "id"> {}
+interface DoctorCreationAttributes
+  extends Optional<
+    DoctorAttributes,
+    "id" | "user" | "specialty" | "appointments"
+  > {}
 
 @Table({ timestamps: false })
 export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
@@ -67,4 +76,7 @@ export class Doctor extends Model<DoctorAttributes, DoctorCreationAttributes> {
 
   @BelongsTo(() => Specialty)
   specialty!: Specialty;
+
+  @HasMany(() => Appointment)
+  appointments!: Appointment[];
 }

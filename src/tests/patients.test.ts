@@ -43,7 +43,7 @@ test("Should get all patients for any user", async () => {
     .get("/api/patients")
     .set("Authorization", `Bearer ${doctorToken}`)
     .expect(200);
-  expect(response.body[0]).toMatchObject(patient);
+  expect(response.body.patients[0]).toMatchObject(patient);
 });
 
 test("Should update patient as receptionist", async () => {

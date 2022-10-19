@@ -1,67 +1,74 @@
 import { Router } from "express";
 import AppointmentsController from "../controllers/appointments";
 import authMW from "../middlewares/authMW";
-import { isAdmin, isReceptionist } from "../middlewares/rolesMW";
+import { isAdmin, isDoctor, isReceptionist } from "../middlewares/rolesMW";
 import { param, body } from "express-validator";
-import validationMW from "../middlewares/validationMW";
+import { validateRequest } from "../middlewares/validatate-request";
 
 const router = Router();
 const controller = new AppointmentsController();
 
 router.get(
-  "/appointments/on/:date",
+  "/api/appointments/on/:day",
   authMW,
   isAdmin,
   controller.getAllAppointmentsOnDay
 );
 
+router.get(
+  "/api/doctors/appointments/on/:day",
+  authMW,
+  isDoctor,
+  controller.getMyAppointments
+);
+
 router.post(
-  "/appointments/doctor/:id",
+  "/api/appointments/doctor/:id",
   authMW,
   isReceptionist,
   [
     param("id")
       .isInt({ min: 1 })
-      .withMessage("DoctorId should be a positive int."),
-    body("PatientId")
+      .withMessage("doctorId should be a positive int."),
+    body("patientId")
       .isInt({ min: 1 })
-      .withMessage("PatientId should be a positive int."),
+      .withMessage("patientId should be a positive int."),
   ],
-  validationMW,
+  validateRequest,
   controller.createAppointmentWithSpecificDoctor
 );
 
 router.post(
-  "/appointments/specialty/:id",
+  "/api/appointments/specialty/:id",
   authMW,
   isReceptionist,
   [
     param("id")
       .isInt({ min: 1 })
-      .withMessage("SpecialtyId should be a positive int."),
-    body("PatientId")
+      .withMessage("specialtyId should be a positive int."),
+    body("patientId")
       .isInt({ min: 1 })
-      .withMessage("PatientId should be a positive int."),
+      .withMessage("patientId should be a positive int."),
   ],
-  validationMW,
-  controller.createAppointmentWithSpecificDoctor
+  validateRequest,
+  controller.createAppointmentInSpecialty
 );
 
 router.get(
-  "/appointments/doctor/:id/on/:date",
+  "/api/appointments/doctor/:id/on/:day",
   authMW,
   isAdmin,
   [
     param("id")
       .isInt({ min: 1 })
-      .withMessage("DoctorId should be a positive int."),
+      .withMessage("doctorId should be a positive int."),
   ],
-  validationMW,
+  validateRequest,
   controller.getDoctorAppointments
 );
 
 router.get(
-  "/appointments/specialty/:id/on/:date",
+  "/api/appointments/specialty/:id/on/:day",
   authMW,
   isAdmin,
   [
@@ -69,46 +76,47 @@ router.get(
       .isInt({ min: 1 })
       .withMessage("SpecialtyId should be a positive int."),
   ],
-  validationMW,
+  validateRequest,
   controller.getSpecialtyAppointments
 );
 
 router.get(
-  "/nearestAppointment/doctor/:id/on/:date",
+  "/api/appointments/nearest/doctor/:id/on/:day",
   authMW,
   isReceptionist,
   [
     param("id")
       .isInt({ min: 1 })
-      .withMessage("DoctorId should be a positive int."),
+      .withMessage("doctorId should be a positive int."),
   ],
-  validationMW,
+  validateRequest,
   controller.getDoctorNearestAppointment
 );
 
 router.get(
-  "/nearestAppointment/specialty/:id/on/:date",
+  "/api/appointments/nearest/specialty/:id/on/:day",
   authMW,
   isReceptionist,
   [
     param("id")
       .isInt({ min: 1 })
-      .withMessage("SpecialtyId should be a positive int."),
+      .withMessage("specialtyId should be a positive int."),
   ],
-  validationMW,
+  validateRequest,
   controller.getSpecialtyNearestAppointment
 );
 
 router
-  .route("/appointments/:id")
+  .route("/api/appointments/:id")
   .patch(
     authMW,
     isReceptionist,
     [
       param("id")
         .isInt({ min: 1 })
-        .withMessage("AppointmentId should be a positive int."),
+        .withMessage("appointmentId should be a positive int."),
     ],
+    validateRequest,
     controller.editAppointment
   )
   .delete(
@@ -117,8 +125,9 @@ router
     [
       param("id")
         .isInt({ min: 1 })
-        .withMessage("AppointmentId should be a positive int."),
+        .withMessage("appointmentId should be a positive int."),
     ],
+    validateRequest,
     controller.cancelAppointment
   );
 

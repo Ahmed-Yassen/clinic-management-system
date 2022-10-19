@@ -3,11 +3,14 @@ import connection from "./db";
 import { User } from "./models/user";
 
 connection
-  .sync({ force: process.env.NODE_ENV === "development" })
+  // .sync({ force: process.env.NODE_ENV === "development" })
+  .sync()
   .then(async () => {
     console.log("DB Synced Successfully!");
     //- Create Admin Only On First Connection
-    const existingAdmin = await User.findByPk(1);
+    const existingAdmin = await User.findOne({
+      where: { email: process.env.ADMIN_EMAIL },
+    });
     if (!existingAdmin) {
       await User.create({
         email: process.env.ADMIN_EMAIL as string,

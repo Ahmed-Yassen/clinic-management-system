@@ -1,6 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
 import { Dialect } from "sequelize/types";
 import { EnvMissingError } from "./errors/env-missing-error";
+import { Appointment } from "./models/appointment";
 import { Doctor } from "./models/doctor";
 import { Patient } from "./models/patient";
 import { Receptionist } from "./models/receptionist";
@@ -25,23 +26,7 @@ const connection = new Sequelize({
   password,
   database,
   logging: false,
-  models: [User, Doctor, Receptionist, Specialty, Patient],
+  models: [User, Doctor, Receptionist, Specialty, Patient, Appointment],
 });
-
-// Patients.hasMany(Appointments, {
-//   foreignKey: {
-//     allowNull: false,
-//   },
-//   hooks: true,
-// });
-// Appointments.belongsTo(Patients);
-
-// Doctors.hasMany(Appointments, {
-//   foreignKey: {
-//     allowNull: false,
-//   },
-//   hooks: true,
-// });
-// Appointments.belongsTo(Doctors);
 
 export default connection;

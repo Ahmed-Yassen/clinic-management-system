@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "env-cmd -f ./config/test.env jest --watchAll --runInBand",
-    "start": "tsc && nodemon dist/index.js",
+    "start": "cross-env NODE_ENV=production tsc && nodemon dist/index.js",
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
     "build": "tsc -p ."
   },

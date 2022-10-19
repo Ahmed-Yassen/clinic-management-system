@@ -1,9 +1,9 @@
 import { Router } from "express";
 import PatientsController from "../controllers/patients";
 import authMW from "../middlewares/authMW";
-import validationMW from "../middlewares/validationMW";
 import { isReceptionist } from "../middlewares/rolesMW";
 import { body, param } from "express-validator";
+import { validateRequest } from "../middlewares/validatate-request";
 
 const router = Router();
 const controller = new PatientsController();
@@ -20,7 +20,7 @@ router
         .withMessage("Invalid phoneNumber value."),
       body("fullName").isString().withMessage("Invalid fullName value."),
     ],
-    validationMW,
+    validateRequest,
     controller.createPatient
   );
 
@@ -40,14 +40,14 @@ router
         .isString()
         .withMessage("Invalid fullName value."),
     ],
-    validationMW,
+    validateRequest,
     controller.updatePatient
   )
   .delete(
     authMW,
     isReceptionist,
     [param("id").isInt({ min: 1 }).withMessage("Invalid patient id value.")],
-    validationMW,
+    validateRequest,
     controller.deletePatient
   );
 export default router;

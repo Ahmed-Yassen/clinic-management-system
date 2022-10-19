@@ -1,25 +1,28 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import moment from "moment";
-import { Op } from "sequelize";
-import { Appointments } from "../models/appointments";
-import { Doctors } from "../models/doctors";
-import { throwCustomError, toGMT2, isOffDay } from "../utils/helperFunctions";
-import {
-  openingHour,
-  closingHour,
-  sessionDuration,
-  maxSessionsPerDay,
-  sessionsPerHour,
-} from "../utils/helperVariables";
-import { Patients } from "../models/patients";
-import { Specialties } from "../models/specialties";
+import { Op, Order, WhereOptions } from "sequelize";
+import { Appointment, AppointmentAttributes } from "../models/appointment";
+import { Doctor } from "../models/doctor";
+import { Patient } from "../models/patient";
+import { Specialty } from "../models/specialty";
+import { BadRequestError } from "../errors/bad-request-error";
+import { NotFoundError } from "../errors/not-found-error";
+import { User } from "../models/user";
 
 export default class AppointmentsController {
-  constructor() {}
+  private sessionDuration = 20; //- 20 Minutes Per Session
+  private openingHour = 17; //- Clinic Opens at 5PM
+  private closingHour = 23; //- Clinic Closes at 11PM
+  private sessionsPerHour = 60 / this.sessionDuration;
+  private workingHours = this.closingHour - this.openingHour;
+  private maxSessionsPerDay = this.workingHours * this.sessionsPerHour;
 
-  private findDoctorNearestDate(date: Date, doctorAppointments: any) {
-    //-First Case: if nearst appointment is at 5 PM
-    const firstAppointmentDate = moment(date).hours(openingHour).minutes(0);
+  private getNearestAvailableAppointment(
+    day: Date,
+    doctorAppointments: Date[]
+  ) {
+    //-First Case: if nearst appointment is at 17 or 5 PM
+    const firstAppointmentDate = moment(day).hours(this.openingHour).minutes(0);
     if (
       doctorAppointments.length === 0 ||
       !moment(doctorAppointments[0])
@@ -28,12 +31,12 @@ export default class AppointmentsController {
     )
       return firstAppointmentDate.toDate();
 
-    //-Second Case: if neasrt appointment is at 10.40 PM
-    const lastAppointmentDate = moment(date)
-      .hours(closingHour - 1)
-      .minutes(sessionDuration * (sessionsPerHour - 1));
+    //-Second Case: if neasrt appointment is at 22:40 or 10.40 PM
+    const lastAppointmentDate = moment(day)
+      .hours(this.closingHour - 1)
+      .minutes(this.sessionDuration * (this.sessionsPerHour - 1));
     if (
-      doctorAppointments.length === maxSessionsPerDay - 1 &&
+      doctorAppointments.length === this.maxSessionsPerDay - 1 &&
       !moment(doctorAppointments[doctorAppointments.length - 1])
         .subtract(2, "hours")
         .isSame(lastAppointmentDate)
@@ -46,17 +49,17 @@ export default class AppointmentsController {
     let endIndex = doctorAppointments.length - 1;
     while (startIndex <= endIndex) {
       const middleIndex = Math.floor((startIndex + endIndex) / 2);
-      /* Formula to find Correct Time:
+      /* Formula to make sure that the Correct Date is in The Correct Index .. index[0] must be at 17 or 5PM and index[lenght-1] must be 22:40 or at 10.40PM
       Hours = index + openingHours , then subtract minutes
       Minutes = sessionDuration * index * (sessionsPerHour -1)
-      examlpe: correct fifth appointment (index= 4)
+      examlpe:  fifth appointment (index= 4) must be at 6.20PM
       {Hours: 4 + 17 = 21 or 9PM} - {Minutes: 20 * 4 * (3-1) = 160Mins or 2hrs:40Mins }, 
       subtract hours from minutes then fifth appointment is : 9pm - 2hrs:40Mins =  6:20PM
       */
-      const correctDate = moment(date)
-        .hours(middleIndex + openingHour)
+      const correctDateInCurrentIndex = moment(day)
+        .hours(middleIndex + this.openingHour)
         .subtract(
-          sessionDuration * middleIndex * (sessionsPerHour - 1),
+          this.sessionDuration * middleIndex * (this.sessionsPerHour - 1),
           "minutes"
         );
 
@@ -64,7 +67,7 @@ export default class AppointmentsController {
         2,
         "hours"
       );
-      if (moment(currentDate).isSame(correctDate)) {
+      if (moment(currentDate).isSame(correctDateInCurrentIndex)) {
         // Go right
         startIndex = middleIndex + 1;
       } else {
@@ -72,10 +75,10 @@ export default class AppointmentsController {
         endIndex = middleIndex - 1;
       }
     }
-    const nearstDate = moment(date)
-      .hours(openingHour + startIndex)
+    const nearstDate = moment(day)
+      .hours(this.openingHour + startIndex)
       .subtract(
-        sessionDuration * startIndex * (sessionsPerHour - 1),
+        this.sessionDuration * startIndex * (this.sessionsPerHour - 1),
         "minutes"
       );
 
@@ -84,324 +87,308 @@ export default class AppointmentsController {
     return nearstDate.toDate();
   }
 
-  private findSpecialtyNearestDate = async (
-    date: Date,
-    specialtyId: number
+  private getAppointments = async (
+    day: Date,
+    {
+      specialtyId = 0,
+      doctorId = 0,
+    }: { specialtyId?: number; doctorId?: number }
   ) => {
-    const doctors = await Doctors.findAll({
-      where: { SpecialtyId: specialtyId },
-      attributes: ["id", "fullName"],
+    const startOfDay = this.toGMT2(
+      moment(day).hours(this.openingHour).toDate()
+    );
+    const endOfDay = this.toGMT2(moment(day).hours(this.closingHour).toDate());
+
+    let where: WhereOptions<AppointmentAttributes>,
+      order: Order = [["date", "ASC"]];
+
+    if (specialtyId) {
+      where = {
+        [Op.and]: [
+          { date: { [Op.between]: [startOfDay, endOfDay] } },
+          { specialtyId },
+        ],
+      };
+      order = [];
+    } else if (doctorId) {
+      where = {
+        [Op.and]: [
+          { date: { [Op.between]: [startOfDay, endOfDay] } },
+          { doctorId },
+        ],
+      };
+    } else {
+      where = {
+        date: { [Op.between]: [startOfDay, endOfDay] },
+      };
+    }
+    return await Appointment.findAll({ where, order });
+  };
+
+  //{doctorId: Date[]} to group each doctor with their appointments
+  private groupDoctorWithAppointments = (
+    specialtyAppointments: Appointment[]
+  ) => {
+    const doctorsAppointmentsMap = new Map<number, Date[]>();
+    specialtyAppointments.forEach((appointment) => {
+      const { doctorId, date } = appointment;
+
+      if (!doctorsAppointmentsMap.get(doctorId))
+        doctorsAppointmentsMap.set(doctorId, []);
+
+      const doctorAppointments = doctorsAppointmentsMap.get(doctorId);
+      doctorAppointments?.push(date);
+
+      doctorsAppointmentsMap.set(doctorId, doctorAppointments as Date[]);
     });
 
-    let specialtyNearestAppointment: Date | null = null;
-    let nearestAppointmentTemp = moment().add(100, "years").toDate();
-    let nearestDoctorId;
-    for (let doctor of doctors) {
-      //- get each doctors appointment
-      const doctorAppointments = (
-        await this.getDoctorAppointmentsOnDay(doctor?.id, date)
-      ).map((appointment) => appointment.getDataValue("date"));
+    return doctorsAppointmentsMap;
+  };
 
-      //- find each doctors nearest appointment
-      let doctorNearestAppointment = this.findDoctorNearestDate(
-        date,
+  private findSpecialtyNearestDate = async (
+    day: Date,
+    specialtyId: number,
+    excludeDoctorId = 0
+  ) => {
+    const specialtyAppointments = await this.getAppointments(day, {
+      specialtyId,
+    });
+
+    const doctorsAppointmentsMap = this.groupDoctorWithAppointments(
+      specialtyAppointments
+    );
+
+    const specialtyDoctors = await Doctor.findAll({
+      where: {
+        [Op.and]: [{ specialtyId }, { id: { [Op.not]: excludeDoctorId } }],
+      },
+      attributes: ["id"],
+    });
+    let tempNearestAppointment = moment().add(100, "years").toDate(); //-The latest possible date
+    let nearestAppointment: Date | null = null;
+    let nearestDoctorId;
+
+    for (let doctor of specialtyDoctors) {
+      const { id: doctorId } = doctor;
+
+      const doctorAppointments = doctorsAppointmentsMap.get(doctorId);
+      if (!doctorAppointments) {
+        nearestAppointment = this.toGMT2(
+          moment(day).hours(this.openingHour).minutes(0).toDate()
+        );
+        nearestDoctorId = doctorId;
+        return [nearestAppointment, nearestDoctorId];
+      }
+
+      let doctorNearestAppointment = this.getNearestAvailableAppointment(
+        day,
         doctorAppointments
       );
       if (!doctorNearestAppointment) continue;
-      doctorNearestAppointment = toGMT2(doctorNearestAppointment as Date);
-      //- compare nearest appointments and pick nearest one
-      if (moment(doctorNearestAppointment).isBefore(nearestAppointmentTemp)) {
-        nearestAppointmentTemp = doctorNearestAppointment;
-        specialtyNearestAppointment = nearestAppointmentTemp;
-        nearestDoctorId = doctor.id;
+
+      doctorNearestAppointment = this.toGMT2(doctorNearestAppointment as Date);
+
+      if (moment(doctorNearestAppointment).isBefore(tempNearestAppointment)) {
+        tempNearestAppointment = doctorNearestAppointment;
+        nearestAppointment = doctorNearestAppointment;
+        nearestDoctorId = doctorId;
       }
     }
-    return [specialtyNearestAppointment, nearestDoctorId];
+
+    return [nearestAppointment, nearestDoctorId];
   };
 
-  private getDoctorAppointmentsOnDay = async (doctorId: number, date: Date) => {
-    const startOfDay = toGMT2(moment(date).hours(openingHour).toDate());
-    const endOfDay = toGMT2(moment(date).hours(closingHour).toDate());
+  private isOldDay(day: Date): Boolean {
+    return moment(day).isBefore(moment());
+  }
+  private isOffDay(date: Date): Boolean {
+    return date.toDateString().match(/^(fri|sat)/i) !== null;
+  }
+  private toGMT2(date: Date): Date {
+    return moment(new Date(date)).add(2, "hours").toDate();
+  }
+  private validateDay = (day: Date) => {
+    if (this.isOldDay(day)) throw new BadRequestError("This is an old date!");
+    if (this.isOffDay(day)) throw new BadRequestError("This is an off day!");
+  };
 
-    return await Appointments.findAll({
-      // attributes: ["date"],
-      where: {
-        [Op.and]: [
-          { date: { [Op.between]: [startOfDay, endOfDay] } },
-          { DoctorId: doctorId },
-        ],
-      },
-      order: [["date", "ASC"]],
+  getAllAppointmentsOnDay = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.params.day));
+    const appointments = await this.getAppointments(day, {});
+    res.json({ success: true, appointments });
+  };
+
+  createAppointmentWithSpecificDoctor = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.body.day));
+    this.validateDay(day);
+
+    const doctor = await Doctor.findByPk(req.params.id);
+    if (!doctor) throw new NotFoundError("doctor");
+
+    const patient = await Patient.findByPk(req.body.patientId);
+    if (!patient) throw new NotFoundError("patient");
+
+    const doctorAppointments = (
+      await this.getAppointments(day, { doctorId: doctor.id })
+    ).map((appointment) => appointment.date);
+
+    const nearestAppointment = this.getNearestAvailableAppointment(
+      day,
+      doctorAppointments
+    );
+    if (!nearestAppointment)
+      throw new BadRequestError("This day is full, try another day!");
+
+    const appointment = await patient.$create("appointment", {
+      date: this.toGMT2(nearestAppointment),
+      doctorId: doctor.id,
+      specialtyId: doctor.specialtyId,
+    });
+
+    res.status(201).json({ success: true, appointment });
+  };
+
+  createAppointmentInSpecialty = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.body.day));
+    this.validateDay(day);
+
+    const patient = await Patient.findByPk(req.body.patientId);
+    if (!patient) throw new NotFoundError("patient");
+
+    const specialty = await Specialty.findByPk(req.params.id);
+    if (!specialty) throw new NotFoundError("specialty");
+
+    const [nearestAppointment, nearestDoctorId] =
+      await this.findSpecialtyNearestDate(day, specialty.id);
+
+    if (!nearestAppointment) throw new BadRequestError("This day is full!");
+
+    const appointment = await patient.$create("appointment", {
+      date: nearestAppointment,
+      doctorId: nearestDoctorId,
+      specialtyId: specialty?.id,
+    });
+
+    res.status(201).json({ success: true, appointment });
+  };
+
+  getDoctorAppointments = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.params.day));
+    if (this.isOffDay(day)) throw new BadRequestError("This is an off day!");
+
+    const doctor = await Doctor.findByPk(req.params.id);
+    if (!doctor) throw new NotFoundError("doctor");
+
+    const doctorAppointments = await this.getAppointments(day, {
+      doctorId: doctor.id,
+    });
+
+    res.json({ success: true, doctorAppointments });
+  };
+
+  getMyAppointments = async (req: Request, res: Response) => {
+    const user = req.user as User;
+    const doctorId = (await user.$get("doctor"))?.id;
+    const day = this.toGMT2(new Date(req.params.day));
+    const doctorAppointments = await this.getAppointments(day, { doctorId });
+    res.json({ success: true, doctorAppointments });
+  };
+
+  getSpecialtyAppointments = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.params.day));
+    if (this.isOffDay(day)) throw new BadRequestError("This is an off day!");
+
+    const specialtyId = parseInt(req.params.id);
+    const specialty = await Specialty.findByPk(specialtyId);
+    if (!specialty) throw new NotFoundError("specialty");
+
+    const appointments = await this.getAppointments(day, { specialtyId });
+    res.json({ success: true, appointments });
+  };
+
+  getDoctorNearestAppointment = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.params.day));
+    this.validateDay(day);
+
+    const doctor = await Doctor.findByPk(req.params.id);
+    if (!doctor) throw new NotFoundError("doctor");
+
+    const doctorAppointments = (
+      await this.getAppointments(day, { doctorId: doctor?.id })
+    ).map((appointment) => appointment.date);
+
+    const nearestAppointment = this.getNearestAvailableAppointment(
+      day,
+      doctorAppointments
+    );
+    if (!nearestAppointment)
+      throw new BadRequestError("This day is full, try another day!");
+
+    res.json({
+      success: true,
+      nearestAppointment: this.toGMT2(nearestAppointment),
     });
   };
 
-  private isOldDate(date: Date): Boolean {
-    return moment(date).isBefore(moment());
-  }
+  getSpecialtyNearestAppointment = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.params.day));
+    this.validateDay(day);
 
-  private validateDate = (date: Date) => {
-    this.isOldDate(date) && throwCustomError("This is an old date!", 400);
-    isOffDay(date) && throwCustomError("This is an off day!", 400);
+    const specialty = await Specialty.findByPk(req.params.id);
+    if (!specialty) throw new NotFoundError("specialty");
+
+    const [nearestAppointment, nearestDoctorId] =
+      await this.findSpecialtyNearestDate(day, specialty.id);
+
+    if (!nearestAppointment) throw new BadRequestError("This day is full!");
+
+    res.json({ success: true, nearestAppointment, doctorId: nearestDoctorId });
   };
 
-  getAllAppointmentsOnDay = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.params.date));
-      isOffDay(date) && throwCustomError("This is an off day!", 400);
+  editAppointment = async (req: Request, res: Response) => {
+    const day = this.toGMT2(new Date(req.body.day));
+    this.validateDay(day);
+    const editWithSameDoctor = req.body.withSameDoctor;
 
-      const startOfDay = toGMT2(moment(date).hours(openingHour).toDate());
-      const endOfDay = toGMT2(moment(date).hours(closingHour).toDate());
+    let appointment = await Appointment.findByPk(req.params.id);
+    if (!appointment) throw new NotFoundError("appointment");
 
-      const appointments = await Appointments.findAll({
-        where: {
-          date: { [Op.between]: [startOfDay, endOfDay] },
-        },
-        order: [["date", "ASC"]],
-      });
-      res.json(appointments);
-    } catch (err) {
-      next(err);
-    }
-  };
+    let nearestDate: Date | null = null;
+    let doctorId: number;
 
-  createAppointmentWithSpecificDoctor = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.body.date));
-      this.validateDate(date);
-
-      const doctor = await Doctors.findByPk(req.params.id);
-      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
-
-      const patient = await Patients.findByPk(req.body.PatientId);
-      !patient && throwCustomError("Couldnt find a patient with that id", 404);
+    if (editWithSameDoctor) {
+      doctorId = appointment.doctorId;
 
       const doctorAppointments = (
-        await this.getDoctorAppointmentsOnDay(doctor?.id, date)
-      ).map((appointment) => appointment.getDataValue("date"));
+        await this.getAppointments(day, { doctorId })
+      ).map((appointment) => appointment.date);
 
-      const nearestAppointment = this.findDoctorNearestDate(
-        date,
-        doctorAppointments
+      nearestDate = this.toGMT2(
+        this.getNearestAvailableAppointment(day, doctorAppointments) as Date
       );
-      !nearestAppointment &&
-        throwCustomError("This day is full, try another day!", 400);
-
-      const appointment = await Appointments.create({
-        date: toGMT2(nearestAppointment as Date),
-        SpecialtyId: doctor?.getDataValue("SpecialtyId"),
-        DoctorId: doctor?.id,
-        PatientId: patient?.id,
-      });
-
-      res.status(201).json({ success: true, appointment });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  createAppointmentInSpecialty = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.body.date));
-      this.validateDate(date);
-      const specialty = await Specialties.findByPk(req.params.id);
-      !specialty &&
-        throwCustomError("Couldnt find a specialty with that id", 404);
-
-      const [specialtyNearestAppointment, nearestDoctorId] =
-        await this.findSpecialtyNearestDate(date, specialty?.id);
-
-      !specialtyNearestAppointment &&
-        throwCustomError("This day is full!", 400);
-
-      const appointment = await Appointments.create({
-        date: specialtyNearestAppointment,
-        PatientId: req.body.PatientId,
-        SpecialtyId: specialty?.id,
-        DoctorId: nearestDoctorId,
-      });
-      res.status(201).json({ success: true, appointment });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  getDoctorAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.params.date));
-      isOffDay(date) && throwCustomError("This is an off day!", 400);
-
-      const doctor = await Doctors.findByPk(req.params.id);
-      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
-
-      const doctorAppointments = await this.getDoctorAppointmentsOnDay(
-        doctor?.id,
-        date
+    } else {
+      [nearestDate, doctorId] = await this.findSpecialtyNearestDate(
+        day,
+        appointment.specialtyId,
+        appointment.doctorId
       );
-      if (doctorAppointments.length === 0)
-        return res.json({
-          msg: `Doctor ${doctor?.fullName} doesnt have appointments on that day!`,
-        });
-
-      res.json(doctorAppointments);
-    } catch (error) {
-      next(error);
     }
+
+    if (!nearestDate)
+      throw new BadRequestError("This day is full, try another day!");
+    appointment = await appointment.update({
+      date: nearestDate,
+      doctorId,
+    });
+
+    res.json({ success: true, appointment });
   };
 
-  getSpecialtyAppointments = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.params.date));
-      isOffDay(date) && throwCustomError("This is an off day!", 400);
+  async cancelAppointment(req: Request, res: Response) {
+    const appointment = await Appointment.findByPk(req.params.id);
+    if (!appointment) throw new NotFoundError("appointment");
 
-      const specialty = await Specialties.findByPk(req.params.id);
-      !specialty &&
-        throwCustomError("Couldnt find a specialty with that id!", 404);
-
-      const startOfDay = toGMT2(moment(date).hours(openingHour).toDate());
-      const endOfDay = toGMT2(moment(date).hours(closingHour).toDate());
-
-      const appointments = await Appointments.findAll({
-        where: {
-          [Op.and]: [
-            { date: { [Op.between]: [startOfDay, endOfDay] } },
-            { SpecialtyId: specialty?.id },
-          ],
-        },
-        order: [["date", "ASC"]],
-      });
-
-      res.json(appointments);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  getDoctorNearestAppointment = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.params.date));
-      this.validateDate(date);
-      const doctor = await Doctors.findByPk(req.params.id);
-      !doctor && throwCustomError("Couldnt find a doctor with that id", 404);
-
-      const doctorAppointments = (
-        await this.getDoctorAppointmentsOnDay(doctor?.id, date)
-      ).map((appointment) => appointment.getDataValue("date"));
-
-      const nearestAppointment = this.findDoctorNearestDate(
-        date,
-        doctorAppointments
-      );
-      !nearestAppointment &&
-        throwCustomError("This day is full, try another day!", 400);
-
-      res.json({ nearestAppointment: nearestAppointment?.toLocaleString() });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  getSpecialtyNearestAppointment = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    try {
-      const date = toGMT2(new Date(req.params.date));
-      this.validateDate(date);
-
-      const specialty = await Specialties.findByPk(req.params.id);
-      !specialty &&
-        throwCustomError("Couldnt find a specialty with that id", 404);
-
-      const [specialtyNearestAppointment, nearestDoctorId] =
-        await this.findSpecialtyNearestDate(date, specialty?.id);
-
-      !specialtyNearestAppointment &&
-        throwCustomError("This day is full!", 400);
-
-      res.json({
-        nearestDate: specialtyNearestAppointment,
-        doctorId: nearestDoctorId,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  editAppointment = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const date = toGMT2(new Date(req.body.date));
-      this.validateDate(date);
-
-      let appointment = await Appointments.findByPk(req.params.id);
-      !appointment &&
-        throwCustomError("Couldnt find an appointment with that id", 404);
-
-      let nearestAppointment: Date | null = null;
-      let nearestDoctorId;
-      if (req.body.withSameDoctor) {
-        nearestDoctorId = appointment?.getDataValue("DoctorId");
-        const doctorAppointments = (
-          await this.getDoctorAppointmentsOnDay(nearestDoctorId, date)
-        ).map((appointment) => appointment.getDataValue("date"));
-        nearestAppointment = toGMT2(
-          this.findDoctorNearestDate(date, doctorAppointments) as Date
-        );
-      } else {
-        [nearestAppointment, nearestDoctorId] =
-          await this.findSpecialtyNearestDate(
-            date,
-            appointment?.getDataValue("SpecialtyId")
-          );
-      }
-      !nearestAppointment &&
-        throwCustomError("This day is full, try another day!", 400);
-
-      appointment = (await appointment?.update({
-        date: nearestAppointment,
-        DoctorId: nearestDoctorId,
-      })) as Appointments;
-
-      res.json(appointment);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  async cancelAppointment(req: Request, res: Response, next: NextFunction) {
-    try {
-      const appointment = await Appointments.findByPk(req.params.id);
-      !appointment &&
-        throwCustomError("Couldnt find an appointment with that id", 404);
-
-      await appointment?.destroy();
-      res.json({ msg: "Deleted", appointment });
-    } catch (error) {
-      next(error);
-    }
+    await appointment?.destroy();
+    res.json({ success: true, appointment });
   }
 }

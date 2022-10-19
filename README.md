@@ -86,7 +86,7 @@ To run the tests
 #### Create a new receptionist (*Requires Auth & Role: admin*)
 
 ```http
-  POST /api/Auth/signup/receptionist
+  POST /api/auth/signup/receptionist
 ```
 
 | Parameter | Type     | Description                |
@@ -101,7 +101,7 @@ To run the tests
 #### Create a new doctor (*Requires Auth & Role: admin*)
 
 ```http
-  POST /api/Auth/signup/doctor
+  POST /api/auth/signup/doctor
 ```
 
 | Parameter | Type     | Description                       |
@@ -117,7 +117,7 @@ To run the tests
 #### Log user in
 
 ```http
-  POST /api/Auth/login
+  POST /api/auth/login
 ```
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |
@@ -127,7 +127,7 @@ To run the tests
 #### Change user password (*Requires Auth*)
 
 ```http
-  PATCH /api/Auth/changepassword
+  PATCH /api/auth/changepassword
 ```
 | Parameter | Type     | Description                       |
 | :-------- | :------- | :-------------------------------- |

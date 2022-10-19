@@ -126,7 +126,7 @@ router
         .isInt({ min: 1 })
         .withMessage("Receptionst id must be a valid number."),
       body("salary")
-        .isFloat({ min: 2700 })
+        .isFloat({ min: 2500 })
         .withMessage("Incorrect Salary value."),
     ],
     validateRequest,

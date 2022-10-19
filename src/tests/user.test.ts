@@ -140,7 +140,7 @@ test("Should update doctor as admin", async () => {
 test("Should change user password", async () => {
   const newPassword = "MySuperStrongPassword";
   await request(app)
-    .patch("/api/users/changePassword")
+    .patch("/api/auth/changepassword")
     .set("Authorization", `Bearer ${doctorToken}`)
     .send({ password: newPassword })
     .expect(200);

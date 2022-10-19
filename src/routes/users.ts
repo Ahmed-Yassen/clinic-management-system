@@ -134,7 +134,7 @@ router
   );
 
 router.patch(
-  "/api/users/changePassword",
+  "/api/auth/changepassword",
   authMW,
   body("password")
     .isAlphanumeric()

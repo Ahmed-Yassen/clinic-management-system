@@ -14,7 +14,7 @@ Technologies Used: Node.js - Express.js - TypeScript - MySQL - Sequelize - Jest
 - Unit Testing with Jest.
 - Assigning different operations based on role [ Admin - Receptionists - Doctors ].
 - Patients can choose to reserve an appointment with a certian doctor or specialty.
-- Patients can reschedule their appointments to the nearest date available, done using binary search algorithm.
+- Patients can reschedule their appointments to the nearest date available, done using binary search algorithm & Map data structure.
 - Doctors can view their own appointments schedule on any day.
 - Receptionists can query about each doctor and specialty nearest available appointment.
 
